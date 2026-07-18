@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Migrate/introspect cần quyền owner, không dùng role runtime giới hạn quyền
+    url: process.env["DATABASE_ADMIN_URL"],
   },
 });
