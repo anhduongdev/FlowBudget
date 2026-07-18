@@ -9,7 +9,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    // Migrate cần connection trực tiếp (không qua pooler)
-    url: process.env["DIRECT_URL"],
+    url: process.env["DATABASE_URL"],
   },
 });

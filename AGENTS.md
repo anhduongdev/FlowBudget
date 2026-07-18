@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Phạm vi áp dụng**: tài liệu này là quy chuẩn **bắt buộc** cho toàn bộ codebase của dự án `expense-management`. Áp dụng cho mọi người tạo/sửa code — lập trình viên và AI assistant (Claude, ChatGPT, Copilot...). Mọi PR/commit không tuân thủ tài liệu này cần được sửa lại trước khi merge.
 >
-> **Stack**: Next.js 16 (App Router, Turbopack) · React 19 · TypeScript (strict) · Tailwind CSS v4 · Prisma 7 (`@prisma/adapter-pg`) · Supabase Postgres · ESLint 9 (flat config).
+> **Stack**: Next.js 16 (App Router, Turbopack) · React 19 · TypeScript (strict) · Tailwind CSS v4 · Prisma 7 (`@prisma/adapter-pg`) · PostgreSQL chạy local qua Docker · ESLint 9 (flat config).
 >
 > **📌 Trạng thái áp dụng hiện tại**: repo hiện chưa có `src/`, `features/`, `shared/services`, `shared/repositories`, `zod`, `zustand`, `shadcn/ui`. Cấu trúc ở mục 2 là **chuẩn mục tiêu**. Việc migrate code hiện có (`app/`, `lib/prisma.ts`) sang cấu trúc này cần được xác nhận riêng trước khi thực hiện hàng loạt — xem "Nguyên tắc dành cho AI" ở mục 22.
 
@@ -257,8 +257,8 @@ export const expenseRepository = {
 - **Prisma Client là singleton duy nhất** — khởi tạo 1 lần tại `shared/config/prisma.ts`, import qua `@/shared/config/prisma`. Không bao giờ `new PrismaClient()` ở nơi khác (gây leak connection trên serverless).
 - **Repository Pattern bắt buộc**: mọi Prisma query nằm trong `shared/repositories/*`. Service gọi Repository; Component/Route Handler không bao giờ import Prisma trực tiếp.
 - **Không query database trực tiếp trong component** — kể cả Server Component.
-- Sau khi sửa `prisma/schema.prisma`: chạy `npx prisma generate` rồi `npx prisma migrate dev --name <mô_tả>`. Migrate dùng `DIRECT_URL` (kết nối trực tiếp, không qua pooler) — cấu hình tại `prisma.config.ts`, không đổi lại thành `DATABASE_URL`.
-- Runtime (`PrismaClient`) dùng `DATABASE_URL` (pooled) qua driver adapter `@prisma/adapter-pg`.
+- Sau khi sửa `prisma/schema.prisma`: chạy `npx prisma generate` rồi `npx prisma migrate dev --name <mô_tả>`.
+- Cả Migrate (`prisma.config.ts`) lẫn runtime (`PrismaClient` qua driver adapter `@prisma/adapter-pg`) đều dùng chung `DATABASE_URL` trỏ tới Postgres chạy trong Docker (local dev).
 
 ```ts
 // ✅ shared/repositories/expense-repository.ts
@@ -466,16 +466,12 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
-  DIRECT_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 });
 
 export const env = envSchema.parse(process.env);
 ```
 
-Toàn bộ code khác import `env` từ file này (`import { env } from "@/shared/config/env"`) thay vì `process.env` trực tiếp. `SUPABASE_SERVICE_ROLE_KEY` chỉ được import trong code chạy server (service/repository), không bao giờ trong Client Component.
+Toàn bộ code khác import `env` từ file này (`import { env } from "@/shared/config/env"`) thay vì `process.env` trực tiếp.
 
 ---
 
@@ -533,7 +529,7 @@ Thứ tự ưu tiên, từ trên xuống:
 
 ## 19. Security 🔒
 
-- **Không lộ Secret Key** — `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` chỉ tồn tại phía server, không log ra console, không trả về response.
+- **Không lộ Secret Key** — `DATABASE_URL` chỉ tồn tại phía server, không log ra console, không trả về response.
 - **Validate toàn bộ input** bằng Zod tại boundary (API Route/Server Action) — xem mục 8.
 - **Escape dữ liệu** khi render nội dung do user nhập; không dùng `dangerouslySetInnerHTML` với dữ liệu chưa qua sanitize.
 - **Không tin dữ liệu từ client** — kể cả khi đã validate ở frontend, backend phải validate lại (client có thể bị bypass).
