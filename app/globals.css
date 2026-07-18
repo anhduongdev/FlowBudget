@@ -1,26 +1,143 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* font-sans mặc định đổi sang Inter theo thiết kế; font-label-md dùng lại
+     Geist đã load sẵn ở layout thay vì tải thêm 1 font "Geist" khác từ CDN */
+  --font-sans: var(--font-inter);
+  --font-label-md: var(--font-geist-sans);
+
+  /* Type scale — display-lg/headline-md/label-md lấy từ thiết kế gốc.
+     headline-lg/body-lg/body-sm được bổ sung vì markup gốc có dùng
+     (text-headline-lg, text-body-lg, text-body-sm) nhưng chưa từng khai báo. */
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 56px;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 700;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--font-weight: 700;
+
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--font-weight: 600;
+
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+
+  --text-label-md: 14px;
+  --text-label-md--line-height: 20px;
+  --text-label-md--letter-spacing: 0.01em;
+  --text-label-md--font-weight: 500;
+
+  /* label-sm dùng ở trang login — cùng lý do bổ sung như trên */
+  --font-label-sm: var(--font-geist-sans);
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 16px;
+  --text-label-sm--letter-spacing: 0.02em;
+  --text-label-sm--font-weight: 500;
+
+  /* Bảng màu — chỉ giữ các token thật sự được dùng trong trang (không copy
+     nguyên bộ ~40 token Material 3 từ file thiết kế gốc, phần lớn không dùng) */
+  --color-background: #051424;
+  --color-on-background: #d4e4fa;
+  --color-surface: #051424;
+  --color-surface-variant: #273647;
+  --color-surface-container: #122131;
+  --color-surface-container-low: #0d1c2d;
+  --color-surface-container-lowest: #010f1f;
+  /* Tông riêng cho panel bên phải trang login — mockup gốc dùng thẳng hex
+     bg-[#1B2435] và rgba(27,36,53,..) cho glass-panel ở 2 chỗ, đặt tên
+     token theo đúng vai trò M3 (surface-container-high) thay vì hardcode. */
+  --color-surface-container-high: #1b2435;
+  --color-on-surface: #d4e4fa;
+  --color-on-surface-variant: #c2c6d6;
+  --color-outline: #8c909f;
+  --color-outline-variant: #424754;
+  --color-primary: #adc6ff;
+  --color-on-primary: #002e6a;
+  --color-primary-container: #4d8eff;
+  --color-secondary: #d0bcff;
+  --color-secondary-container: #571bc1;
+  --color-on-secondary-container: #c4abff;
+  --color-tertiary: #4ae176;
+  --color-tertiary-container: #00a74b;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Trang luôn ở dark theme cố định theo thiết kế (không đổi theo hệ thống),
+   nên không cần prefers-color-scheme / dark: variant. */
+body {
+  background: var(--color-background);
+  color: var(--color-on-background);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.glass-effect {
+  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--color-background) 70%, transparent);
+}
+
+.hero-gradient {
+  background: radial-gradient(
+    circle at 50% -20%,
+    color-mix(in srgb, var(--color-primary-container) 15%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+.bento-card {
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
+  transition: all 0.3s ease;
+}
+
+.bento-card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-4px);
+}
+
+.text-glow {
+  text-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+/* --- Trang đăng nhập / đăng ký --- */
+
+.glass-panel {
+  background: color-mix(in srgb, var(--color-surface-container-high) 70%, transparent);
+  backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--color-surface-variant) 50%, transparent);
+}
+
+.animated-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 20% 30%, color-mix(in srgb, var(--color-primary-container) 15%, transparent) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, color-mix(in srgb, var(--color-secondary-container) 15%, transparent) 0%, transparent 50%);
+}
+
+.floating-element {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.input-glow:focus {
+  box-shadow: 0 0 15px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }

@@ -1633,3 +1633,29 @@ $$;
 CREATE TRIGGER trg_user_seed_categories
     AFTER INSERT ON users
     FOR EACH ROW EXECUTE FUNCTION fn_after_user_created();
+
+
+-- ============================================================================
+-- 19. TRA CỨU SESSION (bổ sung cho tầng ứng dụng — auth)
+--     RLS trên user_sessions đòi hỏi phải biết user_id TRƯỚC khi query được,
+--     nhưng tra cứu session lúc request đến lại chưa biết user_id — đây chính
+--     là bước "bootstrap" danh tính. SECURITY DEFINER cho phép hàm này đọc
+--     xuyên qua RLS (giống fn_seed_default_categories ở mục 18).
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION fn_lookup_session_user(p_token_hash text)
+RETURNS uuid
+LANGUAGE sql STABLE
+SECURITY DEFINER SET search_path = app, public AS $$
+    SELECT user_id
+      FROM user_sessions
+     WHERE refresh_token_hash = p_token_hash
+       AND revoked_at IS NULL
+       AND expires_at > now()
+     LIMIT 1;
+$$;
+
+COMMENT ON FUNCTION fn_lookup_session_user IS
+    'Tra cứu user_id từ hash của session token trong cookie. SECURITY DEFINER
+     để vượt qua RLS — đây là bước xác định danh tính, chạy TRƯỚC khi
+     app.current_user_id được set.';
