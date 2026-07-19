@@ -1,13 +1,167 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
+}
+
+model accounts {
+  id                                                BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id                                           BigInt                   @db.UnsignedBigInt
+  name                                              String                   @db.VarChar(100)
+  type                                              accounts_type            @default(other)
+  initial_balance                                   Decimal                  @default(0.00) @db.Decimal(15, 2)
+  current_balance                                   Decimal                  @default(0.00) @db.Decimal(15, 2)
+  icon                                              String?                  @db.VarChar(50)
+  color                                             String?                  @db.Char(7)
+  is_active                                         Boolean                  @default(true)
+  sort_order                                        Int                      @default(0)
+  created_at                                        DateTime                 @default(now()) @db.Timestamp(0)
+  updated_at                                        DateTime                 @default(now()) @db.Timestamp(0)
+  users                                             users                    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_accounts_user")
+  recurring_transactions                            recurring_transactions[]
+  transactions_transactions_account_idToaccounts    transactions[]           @relation("transactions_account_idToaccounts")
+  transactions_transactions_to_account_idToaccounts transactions[]           @relation("transactions_to_account_idToaccounts")
+
+  @@index([user_id, is_active], map: "idx_accounts_user")
+}
+
+model budgets {
+  id          BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id     BigInt         @db.UnsignedBigInt
+  category_id BigInt?        @db.UnsignedBigInt
+  amount      Decimal        @db.Decimal(15, 2)
+  period      budgets_period @default(monthly)
+  start_date  DateTime       @db.Date
+  is_active   Boolean        @default(true)
+  created_at  DateTime       @default(now()) @db.Timestamp(0)
+  categories  categories?    @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_budget_cat")
+  users       users          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_budget_user")
+
+  @@index([category_id], map: "fk_budget_cat")
+  @@index([user_id], map: "fk_budget_user")
+}
+
+model categories {
+  id                     BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id                BigInt                   @db.UnsignedBigInt
+  parent_id              BigInt?                  @db.UnsignedBigInt
+  name                   String                   @db.VarChar(100)
+  type                   categories_type
+  icon                   String?                  @db.VarChar(50)
+  color                  String?                  @db.Char(7)
+  is_active              Boolean                  @default(true)
+  sort_order             Int                      @default(0)
+  created_at             DateTime                 @default(now()) @db.Timestamp(0)
+  updated_at             DateTime                 @default(now()) @db.Timestamp(0)
+  budgets                budgets[]
+  categories             categories?              @relation("categoriesTocategories", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_categories_parent")
+  other_categories       categories[]             @relation("categoriesTocategories")
+  users                  users                    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_categories_user")
+  recurring_transactions recurring_transactions[]
+  transactions           transactions[]
+
+  @@index([parent_id], map: "fk_categories_parent")
+  @@index([user_id, type, is_active], map: "idx_categories_user_type")
+}
+
+model recurring_transactions {
+  id          BigInt                           @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id     BigInt                           @db.UnsignedBigInt
+  type        recurring_transactions_type
+  account_id  BigInt                           @db.UnsignedBigInt
+  category_id BigInt?                          @db.UnsignedBigInt
+  amount      Decimal                          @db.Decimal(15, 2)
+  frequency   recurring_transactions_frequency
+  next_run    DateTime                         @db.Date
+  note        String?                          @db.VarChar(255)
+  is_active   Boolean                          @default(true)
+  created_at  DateTime                         @default(now()) @db.Timestamp(0)
+  accounts    accounts                         @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_recur_acc")
+  categories  categories?                      @relation(fields: [category_id], references: [id], onUpdate: NoAction, map: "fk_recur_cat")
+  users       users                            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_recur_user")
+
+  @@index([account_id], map: "fk_recur_acc")
+  @@index([category_id], map: "fk_recur_cat")
+  @@index([user_id], map: "fk_recur_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transactions {
+  id                                            BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id                                       BigInt            @db.UnsignedBigInt
+  type                                          transactions_type
+  account_id                                    BigInt            @db.UnsignedBigInt
+  to_account_id                                 BigInt?           @db.UnsignedBigInt
+  category_id                                   BigInt?           @db.UnsignedBigInt
+  amount                                        Decimal           @db.Decimal(15, 2)
+  transaction_date                              DateTime          @db.Date
+  note                                          String?           @db.VarChar(255)
+  created_at                                    DateTime          @default(now()) @db.Timestamp(0)
+  updated_at                                    DateTime          @default(now()) @db.Timestamp(0)
+  accounts_transactions_account_idToaccounts    accounts          @relation("transactions_account_idToaccounts", fields: [account_id], references: [id], onUpdate: NoAction, map: "fk_tx_account")
+  categories                                    categories?       @relation(fields: [category_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_tx_category")
+  accounts_transactions_to_account_idToaccounts accounts?         @relation("transactions_to_account_idToaccounts", fields: [to_account_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_tx_toacc")
+  users                                         users             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tx_user")
+
+  @@index([account_id], map: "idx_tx_account")
+  @@index([category_id], map: "idx_tx_category")
+  @@index([to_account_id], map: "idx_tx_to_account")
+  @@index([user_id, type, transaction_date], map: "idx_tx_type_date")
+  @@index([user_id, transaction_date], map: "idx_tx_user_date")
+}
+
+model users {
+  id                     BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  name                   String                   @db.VarChar(100)
+  email                  String                   @unique(map: "uq_users_email") @db.VarChar(190)
+  password_hash          String                   @db.VarChar(255)
+  currency               String                   @default("VND") @db.Char(3)
+  created_at             DateTime                 @default(now()) @db.Timestamp(0)
+  updated_at             DateTime                 @default(now()) @db.Timestamp(0)
+  accounts               accounts[]
+  budgets                budgets[]
+  categories             categories[]
+  recurring_transactions recurring_transactions[]
+  transactions           transactions[]
+}
+
+enum transactions_type {
+  income
+  expense
+  transfer
+}
+
+enum recurring_transactions_type {
+  income
+  expense
+}
+
+enum accounts_type {
+  cash
+  bank
+  ewallet
+  credit_card
+  savings
+  other
+}
+
+enum categories_type {
+  income
+  expense
+}
+
+enum budgets_period {
+  monthly
+  weekly
+  yearly
+}
+
+enum recurring_transactions_frequency {
+  daily
+  weekly
+  monthly
+  yearly
 }
