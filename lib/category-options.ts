@@ -1,0 +1,63 @@
+/**
+ * Kho icon (Material Symbols Outlined) và kho màu dùng khi người dùng tạo/sửa
+ * danh mục thu chi. Icon lưu dạng tên chưa tô màu; màu là một mã hex duy nhất
+ * áp lên nền hình tròn với icon trắng, khớp với cột `icon`/`color` của bảng
+ * `categories` trong schema.
+ */
+export const CATEGORY_ICONS = [
+  "shopping_basket",
+  "restaurant",
+  "local_cafe",
+  "fastfood",
+  "shopping_bag",
+  "checkroom",
+  "home",
+  "bolt",
+  "water_drop",
+  "wifi",
+  "phone_iphone",
+  "directions_car",
+  "local_gas_station",
+  "directions_bus",
+  "flight",
+  "hotel",
+  "local_hospital",
+  "medication",
+  "fitness_center",
+  "spa",
+  "movie",
+  "sports_esports",
+  "confirmation_number",
+  "school",
+  "child_care",
+  "pets",
+  "celebration",
+  "card_giftcard",
+  "volunteer_activism",
+  "receipt_long",
+  "build",
+  "payments",
+  "trending_up",
+  "account_balance",
+  "savings",
+  "work",
+  "storefront",
+  "more_horiz",
+] as const;
+
+export const CATEGORY_COLORS = [
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#d946ef",
+  "#ec4899",
+  "#f43f5e",
+  "#ef4444",
+  "#f97316",
+  "#d97706",
+  "#65a30d",
+  "#22c55e",
+  "#14b8a6",
+  "#06b6d4",
+  "#64748b",
+] as const;

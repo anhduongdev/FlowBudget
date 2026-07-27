@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AddCategoryButton } from "./add-category-button";
 
 export const metadata: Metadata = {
   title: "FlowBudget - Danh mục chi tiêu",
@@ -137,9 +138,7 @@ export default function CategoriesPage() {
                 notifications
               </span>
             </button>
-            <button className="bg-primary text-white px-6 py-2.5 rounded-full font-label-md text-label-md hover:scale-[1.02] active:scale-[0.98] transition-all soft-shadow">
-              Thêm danh mục
-            </button>
+            <AddCategoryButton />
           </div>
         </header>
         {/* Page Content */}

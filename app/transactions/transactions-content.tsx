@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { AddTransactionModal } from "./add-transaction-modal";
 
 export function TransactionsContent() {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
   useEffect(() => {
     const header = document.querySelector("header");
     const onScroll = () => {
@@ -488,13 +491,21 @@ export function TransactionsContent() {
         </div>
         {/* Floating Action Button */}
         <div className="fixed bottom-8 right-8 z-50">
-          <button className="w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group">
+          <button
+            className="w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
+            onClick={() => setIsAddModalOpen(true)}
+            type="button"
+          >
             <span className="material-symbols-outlined text-3xl group-hover:rotate-90 transition-transform duration-300">
               add
             </span>
           </button>
         </div>
       </main>
+      <AddTransactionModal
+        onClose={() => setIsAddModalOpen(false)}
+        open={isAddModalOpen}
+      />
     </>
   );
 }
