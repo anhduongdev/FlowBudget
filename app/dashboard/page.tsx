@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/services/auth-service";
+import { AppHeader } from "../_components/app-header";
+import { Sidebar } from "../_components/sidebar";
 
 export const metadata: Metadata = {
   title: "FlowBudget - Tổng quan",
@@ -7,144 +11,28 @@ export const metadata: Metadata = {
 const GLASS_CARD =
   "bg-white border border-slate-200/80 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)]";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
   return (
     <>
-      {/* Sidebar Navigation */}
-      <nav className="h-screen w-72 flex flex-col fixed left-0 top-0 bg-white border-r border-slate-200/50 shadow-sm py-8 px-6 z-50">
-        <div className="mb-10">
-          <span className="text-3xl font-black tracking-tighter text-primary">
-            FlowBudget
-          </span>
-        </div>
-        <div className="flex items-center gap-4 mb-10 p-3 rounded-[0.75rem] bg-slate-100/50">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            alt="Profile"
-            className="w-12 h-12 rounded-full object-cover"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJJZjRKHBHS5p4Ji_8nkyCXS90royR7jFoIhqwvJu5yaXPrDY11V3e4TPHgBZABUQwgN9EPKdDGmNE5wMyDx9Q130XP09AG4xvgCCoH52kPADI9qXDEKsLvpA6hjH3p1lONGP_AX_Podo0LrGs4iavCAhAwDT01Y_2DergD0GAkUJRld398ojkcms0jRzNEI5xsPmhgD_mrd_GPTY66PirgEzWzTbY33_21BC7T6ZeX-H0ztVJslXxZErou4MCgz1JfCq2w5bVWQ"
-          />
-          <div>
-            <p className="text-sm font-semibold text-on-surface">
-              Alex Sterling
-            </p>
-            <p className="text-xs text-primary font-bold">9.166.000 ₫</p>
-          </div>
-        </div>
-        <ul className="space-y-1 flex-grow">
-          <li>
-            <a
-              className="flex items-center gap-3 py-3 px-4 rounded-lg text-primary font-bold bg-blue-50 transition-all"
-              href="#"
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-              <span className="text-sm">Tổng quan</span>
-            </a>
-          </li>
-          <li>
-            <a
-              className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
-              href="#"
-            >
-              <span className="material-symbols-outlined">payments</span>
-              <span className="text-sm">Giao dịch</span>
-            </a>
-          </li>
-          <li>
-            <a
-              className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
-              href="#"
-            >
-              <span className="material-symbols-outlined">
-                account_balance_wallet
-              </span>
-              <span className="text-sm">Tài khoản</span>
-            </a>
-          </li>
-          <li>
-            <a
-              className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
-              href="#"
-            >
-              <span className="material-symbols-outlined">
-                account_balance
-              </span>
-              <span className="text-sm">Ngân sách</span>
-            </a>
-          </li>
-          <li>
-            <a
-              className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
-              href="#"
-            >
-              <span className="material-symbols-outlined">category</span>
-              <span className="text-sm">Danh mục</span>
-            </a>
-          </li>
-          <li>
-            <a
-              className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
-              href="#"
-            >
-              <span className="material-symbols-outlined">settings</span>
-              <span className="text-sm">Cài đặt</span>
-            </a>
-          </li>
-        </ul>
-        <div className="mt-auto space-y-1 border-t border-slate-200 pt-6">
-          <a
-            className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
-            href="#"
-          >
-            <span className="material-symbols-outlined">help_outline</span>
-            <span className="text-sm">Hỗ trợ</span>
-          </a>
-          <a
-            className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all"
-            href="#"
-          >
-            <span className="material-symbols-outlined">logout</span>
-            <span className="text-sm">Đăng xuất</span>
-          </a>
-        </div>
-      </nav>
+      <Sidebar userName={user.name} />
       {/* Main Content Area */}
       <main className="ml-72 min-h-screen">
-        {/* Top Navigation */}
-        <header className="sticky top-0 z-40 flex justify-between items-center w-full h-16 px-8 bg-white/80 backdrop-blur-md border-b border-slate-200/30">
-          <div>
-            <h1 className="text-xl font-bold text-on-surface">Tổng quan</h1>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center bg-slate-100 rounded-lg p-1">
-              <button className="px-4 py-1 text-xs font-semibold text-primary bg-white shadow-sm rounded-md">
-                Ngày
-              </button>
-              <button className="px-4 py-1 text-xs font-semibold text-slate-500">
-                Tuần
-              </button>
-              <button className="px-4 py-1 text-xs font-semibold text-slate-500">
-                Tháng
-              </button>
-              <button className="px-4 py-1 text-xs font-semibold text-slate-500">
-                Năm
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-all">
-                <span className="material-symbols-outlined">
-                  notifications
-                </span>
-              </button>
-              <button className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all">
-                <span className="material-symbols-outlined text-[18px]">
-                  add
-                </span>
-                Giao dịch mới
-              </button>
-            </div>
-          </div>
-        </header>
+        <AppHeader
+          primaryAction={
+            <button className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all">
+              <span className="material-symbols-outlined text-[18px]">
+                add
+              </span>
+              Giao dịch mới
+            </button>
+          }
+          title="Tổng quan"
+        />
         {/* Content Canvas */}
         <div className="p-8 max-w-[1200px] mx-auto space-y-6">
           {/* Hero Grid */}

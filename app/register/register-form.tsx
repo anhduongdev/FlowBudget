@@ -1,46 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
+import Link from "next/link";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { registerAction, type AuthFormState } from "@/lib/actions/auth-actions";
+
+const initialState: AuthFormState = {};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      className="w-full py-4 bg-[linear-gradient(135deg,#4338ca_0%,#2a14b4_100%)] text-on-primary font-label-md text-md rounded-[0.75rem] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:hover:scale-100"
+      disabled={pending}
+      type="submit"
+    >
+      {pending ? (
+        <span className="material-symbols-outlined animate-spin">sync</span>
+      ) : (
+        <>
+          <span>Đăng ký ngay</span>
+          <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">
+            arrow_forward
+          </span>
+        </>
+      )}
+    </button>
+  );
+}
 
 export function RegisterForm() {
-  useEffect(() => {
-    const inputs = document.querySelectorAll("input");
-    const onFocus = function (this: HTMLInputElement) {
-      this.parentElement?.parentElement?.classList.add("scale-[1.01]");
-    };
-    const onBlur = function (this: HTMLInputElement) {
-      this.parentElement?.parentElement?.classList.remove("scale-[1.01]");
-    };
-    inputs.forEach((input) => {
-      input.addEventListener("focus", onFocus);
-      input.addEventListener("blur", onBlur);
-    });
-
-    const submitBtn = document.querySelector<HTMLButtonElement>(
-      'button[type="submit"]',
-    );
-    const onClick = function (this: HTMLButtonElement) {
-      const originalContent = this.innerHTML;
-      this.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> <span>Đang xử lý...</span>`;
-      this.disabled = true;
-      this.style.opacity = "0.8";
-
-      setTimeout(() => {
-        this.innerHTML = originalContent;
-        this.disabled = false;
-        this.style.opacity = "1";
-      }, 2000);
-    };
-    submitBtn?.addEventListener("click", onClick);
-
-    return () => {
-      inputs.forEach((input) => {
-        input.removeEventListener("focus", onFocus);
-        input.removeEventListener("blur", onBlur);
-      });
-      submitBtn?.removeEventListener("click", onClick);
-    };
-  }, []);
+  const [state, formAction] = useActionState(registerAction, initialState);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 md:p-8">
@@ -121,12 +112,20 @@ export function RegisterForm() {
               Bắt đầu hành trình tự do tài chính của bạn ngay hôm nay.
             </p>
           </div>
-          <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+          <form action={formAction} className="space-y-5">
+            {state.message && (
+              <p
+                aria-live="polite"
+                className="font-label-md text-label-md text-error"
+              >
+                {state.message}
+              </p>
+            )}
             {/* Full Name Field */}
             <div className="space-y-2">
               <label
                 className="font-label-md text-label-md text-on-surface-variant block ml-1"
-                htmlFor="fullname"
+                htmlFor="name"
               >
                 Họ và tên
               </label>
@@ -136,11 +135,18 @@ export function RegisterForm() {
                 </span>
                 <input
                   className="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border border-outline-variant/50 rounded-[0.75rem] font-body-md text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-0 focus:border-primary transition-all duration-300"
-                  id="fullname"
+                  id="name"
+                  name="name"
                   placeholder="Nguyễn Văn A"
+                  required
                   type="text"
                 />
               </div>
+              {state.errors?.name && (
+                <p className="font-label-sm text-label-sm text-error ml-1">
+                  {state.errors.name[0]}
+                </p>
+              )}
             </div>
             {/* Email Field */}
             <div className="space-y-2">
@@ -157,10 +163,17 @@ export function RegisterForm() {
                 <input
                   className="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border border-outline-variant/50 rounded-[0.75rem] font-body-md text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-0 focus:border-primary transition-all duration-300"
                   id="email"
+                  name="email"
                   placeholder="example@flowbudget.com"
+                  required
                   type="email"
                 />
               </div>
+              {state.errors?.email && (
+                <p className="font-label-sm text-label-sm text-error ml-1">
+                  {state.errors.email[0]}
+                </p>
+              )}
             </div>
             {/* Password Fields Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -178,15 +191,22 @@ export function RegisterForm() {
                   <input
                     className="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border border-outline-variant/50 rounded-[0.75rem] font-body-md text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-0 focus:border-primary transition-all duration-300"
                     id="password"
+                    name="password"
                     placeholder="••••••••"
+                    required
                     type="password"
                   />
                 </div>
+                {state.errors?.password && (
+                  <p className="font-label-sm text-label-sm text-error ml-1">
+                    {state.errors.password[0]}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label
                   className="font-label-md text-label-md text-on-surface-variant block ml-1"
-                  htmlFor="confirm-password"
+                  htmlFor="confirmPassword"
                 >
                   Xác nhận
                 </label>
@@ -196,85 +216,32 @@ export function RegisterForm() {
                   </span>
                   <input
                     className="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border border-outline-variant/50 rounded-[0.75rem] font-body-md text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-0 focus:border-primary transition-all duration-300"
-                    id="confirm-password"
+                    id="confirmPassword"
+                    name="confirmPassword"
                     placeholder="••••••••"
+                    required
                     type="password"
                   />
                 </div>
+                {state.errors?.confirmPassword && (
+                  <p className="font-label-sm text-label-sm text-error ml-1">
+                    {state.errors.confirmPassword[0]}
+                  </p>
+                )}
               </div>
-            </div>
-            {/* Terms Checkbox */}
-            <div className="flex items-start gap-3 py-2">
-              <div className="flex items-center h-5">
-                <input
-                  className="w-5 h-5 text-primary bg-surface-container-low border-outline-variant/50 rounded focus:ring-primary focus:ring-offset-2"
-                  id="terms"
-                  type="checkbox"
-                />
-              </div>
-              <label
-                className="font-label-md text-label-md text-on-surface-variant"
-                htmlFor="terms"
-              >
-                Tôi đồng ý với{" "}
-                <a className="text-primary font-bold hover:underline" href="#">
-                  Điều khoản dịch vụ
-                </a>{" "}
-                và{" "}
-                <a className="text-primary font-bold hover:underline" href="#">
-                  Chính sách bảo mật
-                </a>{" "}
-                của FlowBudget.
-              </label>
             </div>
             {/* Action Button */}
-            <button
-              className="w-full py-4 bg-[linear-gradient(135deg,#4338ca_0%,#2a14b4_100%)] text-on-primary font-label-md text-md rounded-[0.75rem] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 group"
-              type="submit"
-            >
-              <span>Đăng ký ngay</span>
-              <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">
-                arrow_forward
-              </span>
-            </button>
-            {/* Social Sign Up (Optional context filler) */}
-            <div className="relative flex items-center py-4">
-              <div className="flex-grow border-t border-outline-variant/30"></div>
-              <span className="flex-shrink mx-4 font-label-sm text-outline uppercase tracking-widest">
-                Hoặc đăng ký bằng
-              </span>
-              <div className="flex-grow border-t border-outline-variant/30"></div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <button className="flex items-center justify-center gap-2 py-3 border border-outline-variant/50 rounded-[0.75rem] hover:bg-surface-container-low transition-colors duration-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt="Google Logo"
-                  className="w-5 h-5"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9KLvE7oA9aXuHGl5-Gbc3ZsisDwZVR5RYWhj73FCSDkw0ktTqr5fS2FRSOLnGvNM77kAPtp04jK29fxMkZViyh4nVw30pEWXER94MW6J_x1aB1hn7uT8V3ZL4uqC5X7iMrk0_w2zNzPVYDacfcE4QPhyMPVf3HH-z4lRGBrJPIQcvBSe5agqafUjIVAsgLgKQJ3_ICfGEmM-tPZXjMKy3DEd3UTHJrqVYbOJQTt9sX6aiBuus8dkBvFYA4pDbeGDHfTDbn__U0A"
-                />
-                <span className="font-label-md">Google</span>
-              </button>
-              <button className="flex items-center justify-center gap-2 py-3 border border-outline-variant/50 rounded-[0.75rem] hover:bg-surface-container-low transition-colors duration-200">
-                <span
-                  className="material-symbols-outlined text-blue-600"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  qr_code_2
-                </span>
-                <span className="font-label-md">Facebook</span>
-              </button>
-            </div>
+            <SubmitButton />
             {/* Login Redirect */}
             <div className="text-center pt-6">
               <p className="font-body-md text-body-md text-on-surface-variant">
                 Đã có tài khoản?{" "}
-                <a
+                <Link
                   className="text-primary font-bold hover:underline ml-1"
-                  href="#"
+                  href="/login"
                 >
                   Đăng nhập tại đây
-                </a>
+                </Link>
               </p>
             </div>
           </form>

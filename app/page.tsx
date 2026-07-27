@@ -1,6 +1,10 @@
+import Link from "next/link";
+import { getCurrentUser } from "@/lib/services/auth-service";
 import { ScrollReveal } from "./scroll-reveal";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+
   return (
     <>
       <ScrollReveal />
@@ -31,12 +35,32 @@ export default function Home() {
             </a>
           </div>
           <div className="flex items-center space-x-md">
-            <button className="text-primary font-label-md px-4 py-2 hover:bg-surface-variant rounded-xl transition-all">
-              Đăng nhập
-            </button>
-            <button className="bg-primary text-white font-label-md px-6 py-2 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all transform active:scale-95">
-              Đăng ký
-            </button>
+            {user ? (
+              <Link
+                className="bg-primary text-white font-label-md px-6 py-2 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all transform active:scale-95 flex items-center gap-2"
+                href="/dashboard"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  space_dashboard
+                </span>
+                Vào ứng dụng
+              </Link>
+            ) : (
+              <>
+                <Link
+                  className="text-primary font-label-md px-4 py-2 hover:bg-surface-variant rounded-xl transition-all"
+                  href="/login"
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  className="bg-primary text-white font-label-md px-6 py-2 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all transform active:scale-95"
+                  href="/register"
+                >
+                  Đăng ký
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -60,12 +84,12 @@ export default function Home() {
                 hơn bao giờ hết.
               </p>
               <div className="flex flex-col sm:flex-row gap-md justify-center lg:justify-start">
-                <a
+                <Link
                   className="primary-gradient text-white px-8 py-4 rounded-xl font-label-md text-center hover:shadow-xl hover:shadow-primary/30 transition-all transform hover:-translate-y-1"
-                  href="#signup"
+                  href={user ? "/dashboard" : "/register"}
                 >
                   Bắt đầu ngay
-                </a>
+                </Link>
                 <a
                   className="flex items-center justify-center gap-2 border border-outline-variant px-8 py-4 rounded-xl font-label-md text-on-surface-variant hover:bg-white transition-all"
                   href="#demo"
@@ -451,9 +475,12 @@ export default function Home() {
                 tính năng cơ bản.
               </p>
               <div className="flex flex-col sm:flex-row gap-md justify-center relative z-10">
-                <button className="bg-white text-primary px-10 py-4 rounded-xl font-headline-md hover:scale-105 transition-transform">
-                  Đăng ký miễn phí
-                </button>
+                <Link
+                  className="bg-white text-primary px-10 py-4 rounded-xl font-headline-md hover:scale-105 transition-transform"
+                  href={user ? "/dashboard" : "/register"}
+                >
+                  {user ? "Vào ứng dụng" : "Đăng ký miễn phí"}
+                </Link>
                 <button className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-10 py-4 rounded-xl font-headline-md hover:bg-white/30 transition-all">
                   Liên hệ hỗ trợ
                 </button>

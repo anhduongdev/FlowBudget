@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { AppHeader } from "../_components/app-header";
+import { Sidebar } from "../_components/sidebar";
 
-export function AccountsContent() {
+interface AccountsContentProps {
+  userName: string;
+}
+
+export function AccountsContent({ userName }: AccountsContentProps) {
   useEffect(() => {
     const groups = document.querySelectorAll<HTMLElement>(".group");
     const onMouseEnter = (e: Event) => {
@@ -45,163 +51,11 @@ export function AccountsContent() {
 
   return (
     <>
-      {/* Side Navigation Shell */}
-      <aside className="h-screen w-72 flex flex-col fixed left-0 top-0 bg-white/70 backdrop-blur-xl border-r border-outline-variant/30 shadow-2xl z-50">
-        <div className="flex flex-col h-full py-8 px-6">
-          <div className="mb-10">
-            <span className="font-display-lg text-display-lg font-black tracking-tighter text-primary">
-              FlowBudget
-            </span>
-          </div>
-          <nav className="flex-1 space-y-2">
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded-[0.75rem] transition-all duration-300 ease-in-out text-on-surface-variant hover:bg-surface-container-highest/40"
-              href="#"
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-              <span className="font-label-md text-label-md">Dashboard</span>
-            </a>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded-[0.75rem] transition-all duration-300 ease-in-out text-on-surface-variant hover:bg-surface-container-highest/40"
-              href="#"
-            >
-              <span className="material-symbols-outlined">payments</span>
-              <span className="font-label-md text-label-md">
-                Transactions
-              </span>
-            </a>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded-[0.75rem] transition-all duration-300 ease-in-out text-primary font-bold border-r-4 border-primary bg-surface-container-low/50"
-              href="#"
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                account_balance_wallet
-              </span>
-              <span className="font-label-md text-label-md">Accounts</span>
-            </a>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded-[0.75rem] transition-all duration-300 ease-in-out text-on-surface-variant hover:bg-surface-container-highest/40"
-              href="#"
-            >
-              <span className="material-symbols-outlined">
-                account_balance
-              </span>
-              <span className="font-label-md text-label-md">Budgets</span>
-            </a>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded-[0.75rem] transition-all duration-300 ease-in-out text-on-surface-variant hover:bg-surface-container-highest/40"
-              href="#"
-            >
-              <span className="material-symbols-outlined">savings</span>
-              <span className="font-label-md text-label-md">Savings</span>
-            </a>
-            <a
-              className="flex items-center gap-4 px-4 py-3 rounded-[0.75rem] transition-all duration-300 ease-in-out text-on-surface-variant hover:bg-surface-container-highest/40"
-              href="#"
-            >
-              <span className="material-symbols-outlined">settings</span>
-              <span className="font-label-md text-label-md">Settings</span>
-            </a>
-          </nav>
-          <div className="mt-auto space-y-6">
-            <button className="w-full bg-primary text-on-primary py-4 rounded-2xl font-label-md text-label-md shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-              Add Transaction
-            </button>
-            <div className="pt-6 border-t border-outline-variant/30 flex flex-col gap-2">
-              <a
-                className="flex items-center gap-4 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors"
-                href="#"
-              >
-                <span className="material-symbols-outlined">
-                  help_outline
-                </span>
-                <span className="font-label-md text-label-md">Support</span>
-              </a>
-              <a
-                className="flex items-center gap-4 px-4 py-2 text-on-surface-variant hover:text-error transition-colors"
-                href="#"
-              >
-                <span className="material-symbols-outlined">logout</span>
-                <span className="font-label-md text-label-md">Logout</span>
-              </a>
-            </div>
-            <div className="flex items-center gap-3 p-2 bg-surface-container-low rounded-2xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt="User Profile"
-                className="w-12 h-12 rounded-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBH9OmrzpSnXn0BjuaJzbBYBEuskmxKwVbTgAF2F1-obFlN4j3aMDh0OvOAYRMLCo4AEtt06rTJk0MJ2UVEJLuKMUJm6Znnvi6XIg2V87bfb0jMxv6sVIqpCykq087AsGtQSIY-m42hGIgA_-CDjwL6de2_-A5OYgXwQN5vj-haKEMvx0Y0m_RUMgqPZwOikjWs2PIUQHfemQDHbGeQ_3elOCqDDcgqBeixsOv25yOnyhUujCAGba96ld61Jqb24U0MfcJSs7QsXA"
-              />
-              <div className="flex flex-col">
-                <span className="font-label-md text-label-md text-on-surface">
-                  Alex Sterling
-                </span>
-                <span className="font-label-sm text-label-sm text-primary font-bold">
-                  $124,592.00
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-      {/* Top Navigation Bar */}
-      <header className="flex justify-between items-center w-full h-20 px-8 ml-72 max-w-[calc(100%-18rem)] sticky top-0 z-40 bg-surface/80 backdrop-blur-md">
-        <h1 className="font-headline-md text-headline-md font-bold text-on-surface">
-          Tài khoản
-        </h1>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center bg-surface-container-low px-4 py-2 rounded-full border border-outline-variant/20 focus-within:border-primary transition-all">
-            <span className="material-symbols-outlined text-outline">
-              search
-            </span>
-            <input
-              className="bg-transparent border-none focus:ring-0 text-body-md font-body-md w-48"
-              placeholder="Tìm kiếm tài khoản..."
-              type="text"
-            />
-          </div>
-          <nav className="flex items-center gap-6">
-            <a
-              className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors"
-              href="#"
-            >
-              Ngày
-            </a>
-            <a
-              className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors"
-              href="#"
-            >
-              Tuần
-            </a>
-            <a
-              className="font-label-sm text-label-sm text-primary font-semibold border-b-2 border-primary pb-1"
-              href="#"
-            >
-              Tháng
-            </a>
-            <a
-              className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors"
-              href="#"
-            >
-              Năm
-            </a>
-          </nav>
-          <button className="relative p-2 text-on-surface-variant hover:text-primary transition-colors">
-            <span
-              className="material-symbols-outlined"
-              style={{ verticalAlign: "middle" }}
-            >
-              notifications
-            </span>
-            <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
-          </button>
-        </div>
-      </header>
+      <Sidebar userName={userName} />
       {/* Main Content Canvas */}
-      <main className="ml-72 p-10 min-h-screen">
+      <main className="ml-72 min-h-screen">
+        <AppHeader title="Tài khoản" />
+        <div className="p-10">
         {/* Account Cards Grid - Updated to match IMAGE_13 style */}
         <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-xxl">
           {/* Account: Thẻ (Primary) */}
@@ -501,6 +355,7 @@ export function AccountsContent() {
             </button>
           </div>
         </section>
+        </div>
       </main>
       {/* Floating Action Button for Mobile */}
       <button className="md:hidden fixed bottom-8 right-8 w-16 h-16 rounded-full bg-primary text-on-primary shadow-2xl flex items-center justify-center z-[100] active:scale-95 transition-transform">

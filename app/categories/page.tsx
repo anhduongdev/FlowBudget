@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/services/auth-service";
+import { AppHeader } from "../_components/app-header";
+import { Sidebar } from "../_components/sidebar";
 import { AddCategoryButton } from "./add-category-button";
 
 export const metadata: Metadata = {
@@ -7,140 +11,18 @@ export const metadata: Metadata = {
 
 const GLASS_CARD_BORDER_STYLE = { borderColor: "rgba(226, 232, 240, 0.5)" };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
   return (
     <>
-      {/* Side Navigation Shell */}
-      <aside className="h-screen w-72 flex flex-col fixed left-0 top-0 bg-white/70 backdrop-blur-xl border-r border-outline-variant/30 shadow-2xl py-8 px-6 z-50">
-        <div className="mb-10">
-          <h1 className="font-display-lg text-display-lg font-black tracking-tighter text-primary">
-            FlowBudget
-          </h1>
-        </div>
-        <div className="flex items-center gap-4 mb-10 p-3 rounded-[0.75rem] bg-surface-container-low/50">
-          <div className="w-12 h-12 rounded-full overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              className="w-full h-full object-cover"
-              data-alt="A professional headshot of a refined male executive in his early 30s, wearing a crisp white shirt against a soft blue studio background. The lighting is bright and airy, reflecting a clean and trustworthy financial services brand aesthetic. Professional, high-end photography style with shallow depth of field."
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAa2G76GmHrQRDB0a7AbLommz-Y4BHVZu0dX4Hgpl7N4fuBJN4YCDXqwnOg3yAEnUtHMCXPLk8BSvwo-ikpQIio2hV1w_5cvEgitDMAwYyDXndNWG8v0MlZelkHFzlxB5h8aeM3WSIbPDYwHQQvyweqlC8II9afwB5IHO6mlnGVRJPzuzGScoHWfVICpnyHT8_DE-BVYEQOoweqMa6E2Tw6xdt7S6k3jIl51opwRJFhlDTRIIeIukVu2CGkyMVSVKGpCBcHmBh-fQ"
-            />
-          </div>
-          <div>
-            <p className="font-label-md text-label-md text-on-surface">
-              Alex Sterling
-            </p>
-            <p className="font-label-sm text-label-sm text-primary">
-              $124,592.00
-            </p>
-          </div>
-        </div>
-        <nav className="flex-1 space-y-2">
-          <a
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest/40 transition-all duration-300"
-            href="#"
-          >
-            <span className="material-symbols-outlined">dashboard</span>
-            <span className="font-label-md text-label-md">Dashboard</span>
-          </a>
-          <a
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest/40 transition-all duration-300"
-            href="#"
-          >
-            <span className="material-symbols-outlined">payments</span>
-            <span className="font-label-md text-label-md">Transactions</span>
-          </a>
-          <a
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-container-low/50"
-            href="#"
-          >
-            <span className="material-symbols-outlined">category</span>
-            <span className="font-label-md text-label-md">Categories</span>
-          </a>
-          <a
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest/40 transition-all duration-300"
-            href="#"
-          >
-            <span className="material-symbols-outlined">
-              account_balance_wallet
-            </span>
-            <span className="font-label-md text-label-md">Accounts</span>
-          </a>
-          <a
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest/40 transition-all duration-300"
-            href="#"
-          >
-            <span className="material-symbols-outlined">savings</span>
-            <span className="font-label-md text-label-md">Savings</span>
-          </a>
-          <a
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest/40 transition-all duration-300"
-            href="#"
-          >
-            <span className="material-symbols-outlined">settings</span>
-            <span className="font-label-md text-label-md">Settings</span>
-          </a>
-        </nav>
-        <div className="mt-auto space-y-2 pt-6 border-t border-outline-variant/20">
-          <a
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest/40 transition-all duration-300"
-            href="#"
-          >
-            <span className="material-symbols-outlined">help_outline</span>
-            <span className="font-label-md text-label-md">Support</span>
-          </a>
-          <a
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest/40 transition-all duration-300"
-            href="#"
-          >
-            <span className="material-symbols-outlined">logout</span>
-            <span className="font-label-md text-label-md">Logout</span>
-          </a>
-        </div>
-      </aside>
+      <Sidebar userName={user.name} />
       {/* Main Content Area */}
       <main className="ml-72 min-h-screen bg-background">
-        {/* Top Nav Bar Shell */}
-        <header className="flex justify-between items-center w-full h-20 px-8 sticky top-0 z-40 bg-surface/80 backdrop-blur-md shadow-sm">
-          <div className="flex items-center gap-8">
-            <h2 className="font-headline-md text-headline-md font-bold text-on-surface">
-              Categories
-            </h2>
-            <nav className="hidden md:flex gap-6">
-              <a
-                className="font-label-sm text-label-sm text-primary font-semibold border-b-2 border-primary pb-1"
-                href="#"
-              >
-                Chi tiêu
-              </a>
-              <a
-                className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors"
-                href="#"
-              >
-                Thu nhập
-              </a>
-              <a
-                className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors"
-                href="#"
-              >
-                Yêu thích
-              </a>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-highest/40 transition-colors">
-              <span className="material-symbols-outlined text-on-surface-variant">
-                search
-              </span>
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-highest/40 transition-colors">
-              <span className="material-symbols-outlined text-on-surface-variant">
-                notifications
-              </span>
-            </button>
-            <AddCategoryButton />
-          </div>
-        </header>
+        <AppHeader primaryAction={<AddCategoryButton />} title="Danh mục" />
         {/* Page Content */}
         <div className="p-margin max-w-7xl mx-auto">
           {/* Category Overview Section with Donut Chart */}

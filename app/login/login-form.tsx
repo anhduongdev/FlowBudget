@@ -1,63 +1,46 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import Link from "next/link";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { loginAction, type AuthFormState } from "@/lib/actions/auth-actions";
 
 const GLASS_CARD_OVERRIDE_STYLE = { borderColor: "rgba(226, 232, 240, 0.5)" };
 const GLASS_CARD_SHADOW =
   "shadow-[0_10px_25px_-5px_rgba(0,0,0,0.04),0_8px_10px_-6px_rgba(0,0,0,0.04)]";
 
+const initialState: AuthFormState = {};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      className="w-full primary-gradient-btn text-white font-label-md text-label-md py-md rounded-[0.75rem] flex items-center justify-center space-x-sm shadow-xl mt-lg disabled:opacity-70"
+      disabled={pending}
+      type="submit"
+    >
+      {pending ? (
+        <span className="material-symbols-outlined animate-spin">
+          progress_activity
+        </span>
+      ) : (
+        <>
+          <span>Đăng nhập ngay</span>
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: "20px" }}
+          >
+            arrow_forward
+          </span>
+        </>
+      )}
+    </button>
+  );
+}
+
 export function LoginForm() {
-  const formRef = useRef<HTMLFormElement>(null);
-  const submitBtnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const inputs = document.querySelectorAll("input");
-    const onFocus = (e: FocusEvent) => {
-      (e.currentTarget as HTMLInputElement).parentElement?.classList.add(
-        "scale-[1.01]",
-      );
-    };
-    const onBlur = (e: FocusEvent) => {
-      (e.currentTarget as HTMLInputElement).parentElement?.classList.remove(
-        "scale-[1.01]",
-      );
-    };
-    inputs.forEach((input) => {
-      input.addEventListener("focus", onFocus);
-      input.addEventListener("blur", onBlur);
-    });
-
-    const form = formRef.current;
-    const onSubmit = (e: SubmitEvent) => {
-      e.preventDefault();
-      const btn = submitBtnRef.current;
-      if (!btn) return;
-      const originalContent = btn.innerHTML;
-      btn.innerHTML =
-        '<span class="material-symbols-outlined animate-spin">progress_activity</span>';
-      btn.disabled = true;
-
-      setTimeout(() => {
-        btn.innerHTML =
-          '<span class="material-symbols-outlined">check_circle</span> <span>Thành công!</span>';
-        btn.classList.replace("primary-gradient-btn", "bg-tertiary");
-        setTimeout(() => {
-          btn.innerHTML = originalContent;
-          btn.classList.replace("bg-tertiary", "primary-gradient-btn");
-          btn.disabled = false;
-        }, 2000);
-      }, 1500);
-    };
-    form?.addEventListener("submit", onSubmit);
-
-    return () => {
-      inputs.forEach((input) => {
-        input.removeEventListener("focus", onFocus);
-        input.removeEventListener("blur", onBlur);
-      });
-      form?.removeEventListener("submit", onSubmit);
-    };
-  }, []);
+  const [state, formAction] = useActionState(loginAction, initialState);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-md md:p-xxl bg-surface relative overflow-hidden">
@@ -146,12 +129,15 @@ export function LoginForm() {
                 Vui lòng nhập thông tin để truy cập tài khoản
               </p>
             </div>
-            <form
-              ref={formRef}
-              action="#"
-              className="w-full space-y-lg"
-              method="POST"
-            >
+            <form action={formAction} className="w-full space-y-lg">
+              {state.message && (
+                <p
+                  aria-live="polite"
+                  className="font-label-md text-label-md text-error text-center"
+                >
+                  {state.message}
+                </p>
+              )}
               {/* Email Field */}
               <div className="space-y-sm">
                 <label
@@ -176,6 +162,11 @@ export function LoginForm() {
                     type="email"
                   />
                 </div>
+                {state.errors?.email && (
+                  <p className="font-label-sm text-label-sm text-error">
+                    {state.errors.email[0]}
+                  </p>
+                )}
               </div>
               {/* Password Field */}
               <div className="space-y-sm">
@@ -192,12 +183,6 @@ export function LoginForm() {
                     </span>
                     Mật khẩu
                   </label>
-                  <a
-                    className="font-label-sm text-label-sm text-primary hover:underline transition-all"
-                    href="#"
-                  >
-                    Quên mật khẩu?
-                  </a>
                 </div>
                 <div className="relative group">
                   <input
@@ -208,89 +193,26 @@ export function LoginForm() {
                     required
                     type="password"
                   />
-                  <button
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors"
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined">
-                      visibility
-                    </span>
-                  </button>
                 </div>
-              </div>
-              {/* Remember Me & Policy */}
-              <div className="flex items-center">
-                <input
-                  className="h-4 w-4 text-primary focus:ring-primary border-outline-variant rounded"
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                />
-                <label
-                  className="ml-2 block font-label-sm text-label-sm text-on-surface-variant"
-                  htmlFor="remember-me"
-                >
-                  Duy trì đăng nhập trong 30 ngày
-                </label>
+                {state.errors?.password && (
+                  <p className="font-label-sm text-label-sm text-error">
+                    {state.errors.password[0]}
+                  </p>
+                )}
               </div>
               {/* Submit Button */}
-              <button
-                ref={submitBtnRef}
-                className="w-full primary-gradient-btn text-white font-label-md text-label-md py-md rounded-[0.75rem] flex items-center justify-center space-x-sm shadow-xl mt-lg"
-                type="submit"
-              >
-                <span>Đăng nhập ngay</span>
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: "20px" }}
-                >
-                  arrow_forward
-                </span>
-              </button>
+              <SubmitButton />
             </form>
-            {/* Divider */}
-            <div className="w-full flex items-center my-xl">
-              <div className="flex-grow border-t border-outline-variant/30"></div>
-              <span className="px-md font-label-sm text-label-sm text-outline uppercase tracking-wider">
-                Hoặc
-              </span>
-              <div className="flex-grow border-t border-outline-variant/30"></div>
-            </div>
-            {/* Social Logins */}
-            <div className="w-full grid grid-cols-2 gap-md">
-              <button className="flex items-center justify-center space-x-sm py-sm px-md border border-outline-variant rounded-[0.75rem] hover:bg-surface-container transition-colors duration-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt="Google Logo"
-                  className="w-5 h-5"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdx1kg_88e71FlyeAZ5oXonIA2-2CHh0raJowAizyb5G9UD7ucNaFBpmv4bfAlJMHNAHv8zvt-5UzSoqH9lHbBARCdG9kByJQEtLLOTL0FUJ2VHhbjqsBlmpdRKtfZGN6Dcs0VuxJv6rGMQZ42dhK8IRfWMzhLF0JvYlNbrapRnyg4rP1yPlUpN0Qa7EfD4mhGYx-uj-bwtzDqPHS3J1VHOonM4kUo2R5m_FvdDcGqk7YNtWb_ol8d0nPRqNPAoHNsXZ69UkNL8w"
-                />
-                <span className="font-label-sm text-label-sm text-on-surface">
-                  Google
-                </span>
-              </button>
-              <button className="flex items-center justify-center space-x-sm py-sm px-md border border-outline-variant rounded-[0.75rem] hover:bg-surface-container transition-colors duration-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt="Apple Logo"
-                  className="w-5 h-5"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVgXb5CBUanseMGBm5gHQItCBSS47-Zk3JLB1dtCH3ZFxFfEyz01ucxEigpycakt3im5fHhe_bwme6SoJ1OrKWWkqSbxH-O-PzrurWQMYoLzdxXB5cUcfUFPyCYCSHkdLhSbN9EYv2NAANiPXM_g6nZ62xIrKd8cwWH0o1_DqsJ-aABGIb3HH7o9Iues8wxhB0NwQZIJWG7R6o3hLDR4P_N2Demge340vkfbUrOAd-PHYGGIyW4vgeUVN8qNvVkbqfcicNOoy8WA"
-                />
-                <span className="font-label-sm text-label-sm text-on-surface">
-                  Apple ID
-                </span>
-              </button>
-            </div>
             {/* Footer Link */}
             <div className="mt-xl text-center">
               <p className="font-body-md text-body-md text-on-surface-variant">
                 Chưa có tài khoản?{" "}
-                <a
+                <Link
                   className="text-primary font-bold hover:underline transition-all ml-1"
-                  href="#"
+                  href="/register"
                 >
                   Đăng ký ngay
-                </a>
+                </Link>
               </p>
             </div>
           </div>
