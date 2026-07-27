@@ -1,26 +1,270 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-inverse-primary: #c3c0ff;
+  --color-tertiary-container: #005e3f;
+  --color-tertiary: #00442d;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-tint: #5148d7;
+  --color-on-tertiary: #ffffff;
+  --color-on-surface: #0b1c30;
+  --color-primary-container: #4338ca;
+  --color-outline: #777586;
+  --color-on-tertiary-container: #4ddda2;
+  --color-on-secondary-fixed: #131b2e;
+  --color-primary-fixed: #e3dfff;
+  --color-on-background: #0b1c30;
+  --color-primary-fixed-dim: #c3c0ff;
+  --color-secondary-container: #dae2fd;
+  --color-on-secondary: #ffffff;
+  --color-surface-container-lowest: #ffffff;
+  --color-secondary-fixed: #dae2fd;
+  --color-surface-variant: #d3e4fe;
+  --color-on-surface-variant: #464554;
+  --color-on-primary-fixed: #100069;
+  --color-on-secondary-container: #5c647a;
+  --color-on-tertiary-fixed-variant: #005236;
+  --color-on-primary-container: #c1beff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-error-container: #ffdad6;
+  --color-surface: #f8f9ff;
+  --color-secondary-fixed-dim: #bec6e0;
+  --color-error: #ba1a1a;
+  --color-tertiary-fixed-dim: #4edea3;
+  --color-primary: #2a14b4;
+  --color-surface-container: #e5eeff;
+  --color-on-primary: #ffffff;
+  --color-secondary: #565e74;
+  --color-on-error-container: #93000a;
+  --color-on-error: #ffffff;
+  --color-tertiary-fixed: #6ffbbe;
+  --color-surface-bright: #f8f9ff;
+  --color-inverse-surface: #213145;
+  --color-on-secondary-fixed-variant: #3f465c;
+  --color-surface-container-high: #dce9ff;
+  --color-outline-variant: #c7c4d7;
+  --color-background: #f8f9ff;
+  --color-on-primary-fixed-variant: #372abf;
+  --color-surface-dim: #cbdbf5;
+  --color-on-tertiary-fixed: #002113;
+
+  --radius: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* max-w-* falls back to --spacing-* before --container-*, so pin these
+     back to Tailwind's real defaults to avoid colliding with the custom
+     spacing tokens below (spacing.xl/xs are unrelated to maxWidth.xl/xs
+     in the original v3 config, where the two scales are independent). */
+  --max-width-xl: 36rem;
+  --max-width-xs: 20rem;
+  --max-width-md: 28rem;
+  --max-width-sm: 24rem;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-margin: 32px;
+  --spacing-xl: 32px;
+  --spacing-lg: 24px;
+  --spacing-gutter: 24px;
+  --spacing-xxl: 48px;
+  --spacing-base: 4px;
+
+  --font-body-md: "Be Vietnam Pro", sans-serif;
+  --font-body-lg: "Be Vietnam Pro", sans-serif;
+  --font-label-sm: "Be Vietnam Pro", sans-serif;
+  --font-headline-md: "Be Vietnam Pro", sans-serif;
+  --font-headline-lg: "Be Vietnam Pro", sans-serif;
+  --font-label-md: "Be Vietnam Pro", sans-serif;
+  --font-display-lg: "Be Vietnam Pro", sans-serif;
+  --font-headline-lg-mobile: "Be Vietnam Pro", sans-serif;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-body-md--letter-spacing: 0em;
+  --text-body-md--font-weight: 400;
+
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-lg--letter-spacing: 0em;
+  --text-body-lg--font-weight: 400;
+
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 16px;
+  --text-label-sm--letter-spacing: 0.02em;
+  --text-label-sm--font-weight: 600;
+
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--letter-spacing: -0.01em;
+  --text-headline-md--font-weight: 700;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 700;
+
+  --text-label-md: 14px;
+  --text-label-md--line-height: 20px;
+  --text-label-md--letter-spacing: 0.01em;
+  --text-label-md--font-weight: 600;
+
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 56px;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 800;
+
+  --text-headline-lg-mobile: 28px;
+  --text-headline-lg-mobile--line-height: 36px;
+  --text-headline-lg-mobile--letter-spacing: -0.01em;
+  --text-headline-lg-mobile--font-weight: 700;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.primary-gradient {
+  background: linear-gradient(135deg, #2a14b4 0%, #4338ca 100%);
+}
+
+.hover-lift {
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+.primary-gradient-btn {
+  background: linear-gradient(135deg, #4338ca 0%, #2a14b4 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.primary-gradient-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px -5px rgba(67, 56, 202, 0.4);
+}
+
+.input-focus-effect:focus-within {
+  border-color: #4338ca;
+  box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.1);
+}
+
+.icon-blue {
+  background-color: #e3f2fd;
+  color: #1e88e5;
+}
+
+.icon-purple {
+  background-color: #f3e5f5;
+  color: #8e24aa;
+}
+
+.icon-pink {
+  background-color: #fce4ec;
+  color: #d81b60;
+}
+
+.icon-orange {
+  background-color: #fff3e0;
+  color: #fb8c00;
+}
+
+.icon-green {
+  background-color: #e8f5e9;
+  color: #43a047;
+}
+
+.icon-red {
+  background-color: #ffebee;
+  color: #e53935;
+}
+
+.icon-cyan {
+  background-color: #e0f7fa;
+  color: #00acc1;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5eeff;
+  border-radius: 10px;
+}
+
+.soft-shadow {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 25px -5px rgba(0, 0, 0, 0.02);
+}
+
+.circular-chart {
+  display: block;
+  margin: 10px auto;
+  max-width: 80%;
+  max-height: 250px;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 3.8;
+}
+
+.circle {
+  fill: none;
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  animation: progress 1s ease-out forwards;
+}
+
+@keyframes progress {
+  0% {
+    stroke-dasharray: 0 100;
   }
 }
 
+@keyframes floating {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.floating-element {
+  animation: floating 6s ease-in-out infinite;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Be Vietnam Pro", sans-serif;
+  overflow-x: hidden;
 }
