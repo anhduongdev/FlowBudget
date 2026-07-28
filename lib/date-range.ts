@@ -3,11 +3,26 @@ export interface DateRange {
   end: Date;
 }
 
+export function getCurrentDayRange(now: Date = new Date()): DateRange {
+  const start = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  );
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start, end };
+}
+
 export function getCurrentMonthRange(now: Date = new Date()): DateRange {
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const end = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
   );
+  return { start, end };
+}
+
+export function getCurrentYearRange(now: Date = new Date()): DateRange {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1));
   return { start, end };
 }
 
@@ -38,6 +53,30 @@ export function getPreviousWeekRange(now: Date = new Date()): DateRange {
   start.setUTCDate(start.getUTCDate() - 7);
 
   return { start, end: currentWeek.start };
+}
+
+export type PeriodKey = "day" | "week" | "month" | "year";
+
+export function getPeriodRange(
+  key: PeriodKey,
+  now: Date = new Date(),
+): DateRange {
+  switch (key) {
+    case "day":
+      return getCurrentDayRange(now);
+    case "week":
+      return getCurrentWeekRange(now);
+    case "month":
+      return getCurrentMonthRange(now);
+    case "year":
+      return getCurrentYearRange(now);
+  }
+}
+
+export function isSameDateRange(a: DateRange, b: DateRange): boolean {
+  return (
+    a.start.getTime() === b.start.getTime() && a.end.getTime() === b.end.getTime()
+  );
 }
 
 export function formatDateIso(date: Date): string {

@@ -6,6 +6,7 @@ import {
   getPreviousWeekRange,
 } from "@/lib/date-range";
 import { formatVnd } from "@/lib/format";
+import { listActiveAccountsForUser } from "@/lib/services/account-service";
 import { getCurrentUser } from "@/lib/services/auth-service";
 import {
   buildMonthlyBudgetSummary,
@@ -20,8 +21,10 @@ import {
 } from "@/lib/services/transaction-service";
 import { AppHeader } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
+import { QuickAddTransactionButton } from "../dashboard/quick-add-transaction-button";
 import { AddCategoryButton } from "./add-category-button";
 import { CategoryTile } from "./category-tile";
+import { ExpenseCategoryGrid } from "./expense-category-grid";
 import { getWeekInsightMessage } from "./insight-message";
 import { SetBudgetButton } from "./set-budget-button";
 
@@ -49,6 +52,7 @@ export default async function CategoriesPage() {
     weeklyBreakdown,
     previousWeekTotal,
     budgetAmount,
+    accounts,
   ] = await Promise.all([
     getCategoriesWithMonthlySpending(user.id, "expense", monthRange),
     getCategoriesWithMonthlySpending(user.id, "income", monthRange),
@@ -56,6 +60,7 @@ export default async function CategoriesPage() {
     getCurrentWeekExpenseBreakdown(user.id, weekRange),
     getPreviousWeekExpenseTotal(user.id, previousWeekRange),
     getBudgetAmountForMonth(user.id, monthRange),
+    listActiveAccountsForUser(user.id),
   ]);
 
   const budgetSummary = buildMonthlyBudgetSummary(
@@ -173,33 +178,7 @@ export default async function CategoriesPage() {
           </section>
           {/* Expense Categories Section with Minimalist Grid */}
           <section className="mb-xxl">
-            <div className="flex justify-between items-center mb-lg">
-              <div>
-                <h4 className="font-headline-md text-headline-md text-on-surface">
-                  Danh mục Chi tiêu
-                </h4>
-                <p className="font-body-md text-body-md text-on-surface-variant">
-                  Phân bổ nguồn vốn vào các mục đích thiết yếu
-                </p>
-              </div>
-              <button className="flex items-center gap-2 text-primary font-label-md text-label-md hover:underline">
-                Sắp xếp{" "}
-                <span className="material-symbols-outlined text-sm">
-                  swap_vert
-                </span>
-              </button>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-gutter">
-              {expenseCategories.length === 0 ? (
-                <p className="col-span-full font-body-md text-body-md text-on-surface-variant">
-                  Chưa có danh mục chi tiêu nào.
-                </p>
-              ) : (
-                expenseCategories.map((category) => (
-                  <CategoryTile category={category} key={category.id} />
-                ))
-              )}
-            </div>
+            <ExpenseCategoryGrid categories={expenseCategories} />
           </section>
           {/* Income Categories Section */}
           <section className="mb-xxl">
@@ -287,18 +266,17 @@ export default async function CategoriesPage() {
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1_-SSgKfsn2NnwvBniSvt0WoVXH0UswfvFruh4tOTJucC76B7Cga4q3nyB32YxZ22kAw5pDQ03pPMR-hwFfcHlCECvxrKHTn5_Aqy1vzO369eoPRgLGKm9j1tP61rMTyv4k0dYZcWYbTLknGG46EkqeSlxFaebuXSBzf6GHwB0rQgQjCapUrwMLaN_5m45sr0qXZKEV9EqrpV-Sk-_gRNS3D6-IPycnh_-pSM-arBKe2lz6QLUv5V3mB-4-7yQ3HNb9NQ2K_9Iw"
                   />
                 </div>
-                <button className="w-full py-3 rounded-[0.75rem] border border-primary/20 text-primary font-label-md text-label-md hover:bg-primary/5 transition-colors">
-                  Xem báo cáo chi tiết
-                </button>
               </div>
             </div>
           </section>
         </div>
       </main>
-      {/* Contextual FAB (Mobile/Tablet specific but shown as fixed here) */}
-      <button className="fixed bottom-margin right-margin w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all z-50 md:hidden">
-        <span className="material-symbols-outlined text-3xl">add</span>
-      </button>
+      <QuickAddTransactionButton
+        accounts={accounts}
+        expenseCategories={expenseCategories}
+        incomeCategories={incomeCategories}
+        variant="fab"
+      />
     </>
   );
 }

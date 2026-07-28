@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/app/generated/prisma/client";
 import type { transactions_type } from "@/app/generated/prisma/enums";
 
 export function sumTransactionAmountByCategoryForUser(
@@ -58,6 +59,9 @@ const TRANSACTION_LIST_SELECT = {
   amount: true,
   transaction_date: true,
   note: true,
+  account_id: true,
+  to_account_id: true,
+  category_id: true,
   categories: { select: { name: true, icon: true, color: true } },
   accounts_transactions_account_idToaccounts: {
     select: { name: true, icon: true, color: true },
@@ -95,6 +99,24 @@ export function countTransactionsForUser(userId: bigint) {
   return prisma.transactions.count({ where: { user_id: userId } });
 }
 
+const TRANSACTION_DETAIL_SELECT = {
+  id: true,
+  type: true,
+  amount: true,
+  transaction_date: true,
+  note: true,
+  account_id: true,
+  to_account_id: true,
+  category_id: true,
+} as const;
+
+export function findTransactionByIdForUser(id: bigint, userId: bigint) {
+  return prisma.transactions.findFirst({
+    where: { id, user_id: userId },
+    select: TRANSACTION_DETAIL_SELECT,
+  });
+}
+
 interface CreateTransactionInput {
   userId: bigint;
   type: transactions_type;
@@ -110,6 +132,23 @@ export interface AccountBalanceAdjustment {
   accountId: bigint;
   operation: "increment" | "decrement";
   amount: string;
+}
+
+async function applyBalanceAdjustments(
+  tx: Prisma.TransactionClient,
+  adjustments: AccountBalanceAdjustment[],
+) {
+  for (const adjustment of adjustments) {
+    await tx.accounts.update({
+      where: { id: adjustment.accountId },
+      data: {
+        current_balance:
+          adjustment.operation === "increment"
+            ? { increment: adjustment.amount }
+            : { decrement: adjustment.amount },
+      },
+    });
+  }
 }
 
 export function createTransactionWithBalanceUpdates(
@@ -131,18 +170,63 @@ export function createTransactionWithBalanceUpdates(
       select: { id: true },
     });
 
-    for (const adjustment of adjustments) {
-      await tx.accounts.update({
-        where: { id: adjustment.accountId },
-        data: {
-          current_balance:
-            adjustment.operation === "increment"
-              ? { increment: adjustment.amount }
-              : { decrement: adjustment.amount },
-        },
-      });
-    }
+    await applyBalanceAdjustments(tx, adjustments);
 
     return transaction;
+  });
+}
+
+interface UpdateTransactionInput {
+  type: transactions_type;
+  accountId: bigint;
+  toAccountId: bigint | null;
+  categoryId: bigint | null;
+  amount: string;
+  transactionDate: Date;
+  note: string | null;
+}
+
+export function updateTransactionWithBalanceUpdates(
+  id: bigint,
+  userId: bigint,
+  input: UpdateTransactionInput,
+  reversalAdjustments: AccountBalanceAdjustment[],
+  newAdjustments: AccountBalanceAdjustment[],
+) {
+  return prisma.$transaction(async (tx) => {
+    await applyBalanceAdjustments(tx, reversalAdjustments);
+
+    const result = await tx.transactions.updateMany({
+      where: { id, user_id: userId },
+      data: {
+        type: input.type,
+        account_id: input.accountId,
+        to_account_id: input.toAccountId,
+        category_id: input.categoryId,
+        amount: input.amount,
+        transaction_date: input.transactionDate,
+        note: input.note,
+      },
+    });
+
+    await applyBalanceAdjustments(tx, newAdjustments);
+
+    return result;
+  });
+}
+
+export function deleteTransactionWithBalanceUpdates(
+  id: bigint,
+  userId: bigint,
+  reversalAdjustments: AccountBalanceAdjustment[],
+) {
+  return prisma.$transaction(async (tx) => {
+    const result = await tx.transactions.deleteMany({
+      where: { id, user_id: userId },
+    });
+
+    await applyBalanceAdjustments(tx, reversalAdjustments);
+
+    return result;
   });
 }

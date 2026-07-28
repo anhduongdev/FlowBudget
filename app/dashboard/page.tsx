@@ -83,6 +83,7 @@ export default async function DashboardPage() {
   const todayIso = formatDateIso(new Date());
   const recentGroupsView = recentGroups.map((group) => ({
     ...group,
+    isFuture: group.dateIso > todayIso,
     label: getDayGroupLabel(group.dateIso, todayIso),
   }));
   const ringOffset =
@@ -228,7 +229,13 @@ export default async function DashboardPage() {
                 ) : (
                   <div className="p-4 space-y-4">
                     {recentGroupsView.map((group) => (
-                      <DayGroup group={group} key={group.dateIso} />
+                      <DayGroup
+                        accounts={accounts}
+                        expenseCategories={expenseCategories}
+                        group={group}
+                        incomeCategories={incomeCategories}
+                        key={group.dateIso}
+                      />
                     ))}
                   </div>
                 )}
@@ -294,8 +301,9 @@ export default async function DashboardPage() {
                 ) : (
                   <div className="space-y-4">
                     {accounts.slice(0, MAX_ACCOUNTS_SHOWN).map((account, index) => (
-                      <div
+                      <Link
                         className="flex items-center justify-between"
+                        href="/accounts"
                         key={account.id}
                       >
                         <div className="flex items-center gap-4">
@@ -329,7 +337,7 @@ export default async function DashboardPage() {
                         <span className="material-symbols-outlined text-slate-300">
                           chevron_right
                         </span>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -344,10 +352,12 @@ export default async function DashboardPage() {
           </div>
         </div>
       </main>
-      {/* Floating Action Button */}
-      <button className="fixed bottom-8 right-8 w-14 h-14 rounded-full primary-gradient text-white flex items-center justify-center shadow-lg shadow-indigo-200 hover:scale-110 active:scale-95 transition-all z-50">
-        <span className="material-symbols-outlined text-[28px]">add</span>
-      </button>
+      <QuickAddTransactionButton
+        accounts={accounts}
+        expenseCategories={expenseCategories}
+        incomeCategories={incomeCategories}
+        variant="fab"
+      />
     </>
   );
 }

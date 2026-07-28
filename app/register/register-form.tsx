@@ -12,7 +12,7 @@ function SubmitButton() {
 
   return (
     <button
-      className="w-full py-4 bg-[linear-gradient(135deg,#4338ca_0%,#2a14b4_100%)] text-on-primary font-label-md text-md rounded-[0.75rem] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:hover:scale-100"
+      className="w-full py-4 bg-[linear-gradient(135deg,#3063b5_0%,#18448b_100%)] text-on-primary font-label-md text-md rounded-[0.75rem] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:hover:scale-100"
       disabled={pending}
       type="submit"
     >
@@ -43,7 +43,7 @@ export function RegisterForm() {
       {/* Main Auth Container */}
       <main className="relative z-10 w-full max-w-5xl flex flex-col md:flex-row items-stretch justify-center gap-0 overflow-hidden rounded-[24px] glass-card shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_20px_25px_-5px_rgba(0,0,0,0.04)]">
         {/* Left Side: Visual/Branding (Hidden on mobile for focus) */}
-        <div className="hidden md:flex w-1/2 bg-[linear-gradient(135deg,#4338ca_0%,#2a14b4_100%)] p-12 flex-col justify-between text-on-primary">
+        <div className="hidden md:flex w-1/2 bg-[linear-gradient(135deg,#3063b5_0%,#18448b_100%)] p-12 flex-col justify-between text-on-primary">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-[0.75rem] flex items-center justify-center">

@@ -3,38 +3,38 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-inverse-primary: #c3c0ff;
+  --color-inverse-primary: #bed3f4;
   --color-tertiary-container: #005e3f;
   --color-tertiary: #00442d;
   --color-inverse-on-surface: #eaf1ff;
   --color-surface-container-low: #eff4ff;
-  --color-surface-tint: #5148d7;
+  --color-surface-tint: #376bbe;
   --color-on-tertiary: #ffffff;
   --color-on-surface: #0b1c30;
-  --color-primary-container: #4338ca;
+  --color-primary-container: #3063b5;
   --color-outline: #777586;
   --color-on-tertiary-container: #4ddda2;
   --color-on-secondary-fixed: #131b2e;
-  --color-primary-fixed: #e3dfff;
+  --color-primary-fixed: #e5edfa;
   --color-on-background: #0b1c30;
-  --color-primary-fixed-dim: #c3c0ff;
+  --color-primary-fixed-dim: #bed3f4;
   --color-secondary-container: #dae2fd;
   --color-on-secondary: #ffffff;
   --color-surface-container-lowest: #ffffff;
   --color-secondary-fixed: #dae2fd;
   --color-surface-variant: #d3e4fe;
   --color-on-surface-variant: #464554;
-  --color-on-primary-fixed: #100069;
+  --color-on-primary-fixed: #092553;
   --color-on-secondary-container: #5c647a;
   --color-on-tertiary-fixed-variant: #005236;
-  --color-on-primary-container: #c1beff;
+  --color-on-primary-container: #d4e1f7;
   --color-surface-container-highest: #d3e4fe;
   --color-error-container: #ffdad6;
   --color-surface: #f8f9ff;
   --color-secondary-fixed-dim: #bec6e0;
   --color-error: #ba1a1a;
   --color-tertiary-fixed-dim: #4edea3;
-  --color-primary: #2a14b4;
+  --color-primary: #18448b;
   --color-surface-container: #e5eeff;
   --color-on-primary: #ffffff;
   --color-secondary: #565e74;
@@ -47,7 +47,7 @@
   --color-surface-container-high: #dce9ff;
   --color-outline-variant: #c7c4d7;
   --color-background: #f8f9ff;
-  --color-on-primary-fixed-variant: #372abf;
+  --color-on-primary-fixed-variant: #2e599e;
   --color-surface-dim: #cbdbf5;
   --color-on-tertiary-fixed: #002113;
 
@@ -141,7 +141,7 @@
 }
 
 .primary-gradient {
-  background: linear-gradient(135deg, #2a14b4 0%, #4338ca 100%);
+  background: linear-gradient(135deg, #18448b 0%, #3063b5 100%);
 }
 
 .hover-lift {
@@ -155,18 +155,18 @@
 }
 
 .primary-gradient-btn {
-  background: linear-gradient(135deg, #4338ca 0%, #2a14b4 100%);
+  background: linear-gradient(135deg, #3063b5 0%, #18448b 100%);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .primary-gradient-btn:hover {
   transform: scale(1.02);
-  box-shadow: 0 10px 20px -5px rgba(67, 56, 202, 0.4);
+  box-shadow: 0 10px 20px -5px rgba(48, 99, 181, 0.4);
 }
 
 .input-focus-effect:focus-within {
-  border-color: #4338ca;
-  box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.1);
+  border-color: #3063b5;
+  box-shadow: 0 0 0 4px rgba(48, 99, 181, 0.1);
 }
 
 .icon-blue {

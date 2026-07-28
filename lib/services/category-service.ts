@@ -9,11 +9,18 @@ import {
   createCategory,
   findActiveCategoriesByUserAndType,
   findCategoryByUserNameAndType,
+  findCategoryOwnedByUser,
+  softDeleteCategoryForUser,
+  updateCategoryForUser as updateCategoryRepository,
 } from "@/lib/repositories/category-repository";
 import { sumTransactionAmountByCategoryForUser } from "@/lib/repositories/transaction-repository";
-import type { CreateCategoryInput } from "@/lib/validations/category";
+import type {
+  CreateCategoryInput,
+  UpdateCategoryInput,
+} from "@/lib/validations/category";
 
 export class CategoryAlreadyExistsError extends Error {}
+export class CategoryNotFoundError extends Error {}
 
 export async function createCategoryForUser(
   userId: bigint,
@@ -37,6 +44,31 @@ export async function createCategoryForUser(
     icon: input.icon,
     color: input.color,
   });
+}
+
+export async function updateCategoryForUser(
+  userId: bigint,
+  id: bigint,
+  input: UpdateCategoryInput,
+): Promise<void> {
+  const existing = await findCategoryOwnedByUser(id, userId);
+  if (!existing) {
+    throw new CategoryNotFoundError("Danh mục không tồn tại.");
+  }
+
+  await updateCategoryRepository(id, userId, input);
+}
+
+export async function deleteCategoryForUser(
+  userId: bigint,
+  id: bigint,
+): Promise<void> {
+  const existing = await findCategoryOwnedByUser(id, userId);
+  if (!existing) {
+    throw new CategoryNotFoundError("Danh mục không tồn tại.");
+  }
+
+  await softDeleteCategoryForUser(id, userId);
 }
 
 export interface CategoryOption {

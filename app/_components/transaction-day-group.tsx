@@ -1,4 +1,13 @@
+"use client";
+
+import { useState } from "react";
+import {
+  TransactionModal,
+  type EditableTransaction,
+} from "@/app/transactions/transaction-modal";
 import { formatVnd } from "@/lib/format";
+import type { AccountOption } from "@/lib/services/account-service";
+import type { CategoryOption } from "@/lib/services/category-service";
 
 export type TransactionType = "income" | "expense" | "transfer";
 
@@ -7,10 +16,13 @@ export interface TransactionListItemView {
   type: TransactionType;
   amount: number;
   note: string | null;
+  categoryId: string | null;
   categoryName: string | null;
   icon: string;
   color: string;
+  accountId: string;
   accountName: string;
+  toAccountId: string | null;
   toAccountName: string | null;
 }
 
@@ -19,6 +31,14 @@ export interface TransactionDayGroupView {
   label: string;
   netAmount: number;
   items: TransactionListItemView[];
+  isFuture: boolean;
+}
+
+interface DayGroupProps {
+  group: TransactionDayGroupView;
+  accounts: AccountOption[];
+  expenseCategories: CategoryOption[];
+  incomeCategories: CategoryOption[];
 }
 
 const MONTH_YEAR_FORMATTER = new Intl.DateTimeFormat("vi-VN", {
@@ -46,13 +66,39 @@ function transactionItemTitle(item: TransactionListItemView): string {
   return item.categoryName ?? "Không có danh mục";
 }
 
-function TransactionItem({ item }: { item: TransactionListItemView }) {
+function toEditableTransaction(
+  item: TransactionListItemView,
+  dateIso: string,
+): EditableTransaction {
+  return {
+    id: item.id,
+    type: item.type,
+    accountId: item.accountId,
+    toAccountId: item.toAccountId,
+    categoryId: item.categoryId,
+    amount: item.amount,
+    transactionDateIso: dateIso,
+    note: item.note,
+  };
+}
+
+function TransactionItem({
+  item,
+  onSelect,
+}: {
+  item: TransactionListItemView;
+  onSelect: (item: TransactionListItemView) => void;
+}) {
   const isIncome = item.type === "income";
   const amountClassName = isIncome ? "text-tertiary" : "text-error";
   const amountPrefix = isIncome ? "+" : "-";
 
   return (
-    <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group">
+    <button
+      className="w-full flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group text-left"
+      onClick={() => onSelect(item)}
+      type="button"
+    >
       <div className="flex items-center gap-md">
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform"
@@ -83,11 +129,20 @@ function TransactionItem({ item }: { item: TransactionListItemView }) {
           {formatVnd(item.amount)}
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 
-export function DayGroup({ group }: { group: TransactionDayGroupView }) {
+export function DayGroup({
+  group,
+  accounts,
+  expenseCategories,
+  incomeCategories,
+}: DayGroupProps) {
+  const [selected, setSelected] = useState<TransactionListItemView | null>(
+    null,
+  );
+
   const totalClassName =
     group.netAmount > 0
       ? "text-tertiary"
@@ -97,7 +152,7 @@ export function DayGroup({ group }: { group: TransactionDayGroupView }) {
   const totalPrefix = group.netAmount > 0 ? "+" : "";
 
   return (
-    <div className="space-y-md">
+    <div className={`space-y-md ${group.isFuture ? "opacity-50" : ""}`}>
       <div className="flex justify-between items-center pb-sm border-b border-outline-variant/30 px-2">
         <div className="flex items-center gap-4">
           <span className="text-[40px] font-black text-primary leading-none">
@@ -121,9 +176,20 @@ export function DayGroup({ group }: { group: TransactionDayGroupView }) {
       </div>
       <div className="space-y-base">
         {group.items.map((item) => (
-          <TransactionItem item={item} key={item.id} />
+          <TransactionItem item={item} key={item.id} onSelect={setSelected} />
         ))}
       </div>
+      {selected && (
+        <TransactionModal
+          accounts={accounts}
+          expenseCategories={expenseCategories}
+          incomeCategories={incomeCategories}
+          key={selected.id}
+          onClose={() => setSelected(null)}
+          open
+          transaction={toEditableTransaction(selected, group.dateIso)}
+        />
+      )}
     </div>
   );
 }

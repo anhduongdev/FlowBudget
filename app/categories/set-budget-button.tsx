@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { createPortal, useFormStatus } from "react-dom";
 import {
+  setCategoryBudgetAction,
   setMonthlyBudgetAction,
   type BudgetFormState,
 } from "@/lib/actions/budget-actions";
@@ -32,15 +33,21 @@ function SubmitButton() {
 
 interface SetBudgetButtonProps {
   currentAmount: number | null;
+  categoryId?: string;
+  triggerClassName?: string;
 }
 
-export function SetBudgetButton({ currentAmount }: SetBudgetButtonProps) {
+export function SetBudgetButton({
+  currentAmount,
+  categoryId,
+  triggerClassName,
+}: SetBudgetButtonProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(
     currentAmount !== null ? String(currentAmount) : "",
   );
   const [state, formAction] = useActionState(
-    setMonthlyBudgetAction,
+    categoryId ? setCategoryBudgetAction : setMonthlyBudgetAction,
     initialState,
   );
   const [handledState, setHandledState] = useState(state);
@@ -66,7 +73,10 @@ export function SetBudgetButton({ currentAmount }: SetBudgetButtonProps) {
   return (
     <>
       <button
-        className="font-label-sm text-label-sm text-primary hover:underline"
+        className={
+          triggerClassName ??
+          "font-label-sm text-label-sm text-primary hover:underline"
+        }
         onClick={() => setOpen(true)}
         type="button"
       >
@@ -98,6 +108,9 @@ export function SetBudgetButton({ currentAmount }: SetBudgetButtonProps) {
               </div>
 
               <form action={formAction} className="p-6 space-y-5">
+                {categoryId && (
+                  <input name="categoryId" type="hidden" value={categoryId} />
+                )}
                 {state.message && (
                   <p
                     aria-live="polite"

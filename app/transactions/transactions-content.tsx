@@ -7,9 +7,9 @@ import {
 } from "@/app/_components/transaction-day-group";
 import type { AccountOption } from "@/lib/services/account-service";
 import type { CategoryOption } from "@/lib/services/category-service";
-import { AppHeader } from "../_components/app-header";
+import { AppHeader, type PeriodLink } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
-import { AddTransactionModal } from "./add-transaction-modal";
+import { TransactionModal } from "./transaction-modal";
 
 interface TransactionsContentProps {
   userName: string;
@@ -19,6 +19,7 @@ interface TransactionsContentProps {
   incomeCategories: CategoryOption[];
   filterFrom: string;
   filterTo: string;
+  periodLinks: PeriodLink[];
 }
 
 export function TransactionsContent({
@@ -29,6 +30,7 @@ export function TransactionsContent({
   incomeCategories,
   filterFrom,
   filterTo,
+  periodLinks,
 }: TransactionsContentProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -38,6 +40,7 @@ export function TransactionsContent({
       {/* Main Content Area */}
       <main className="ml-72 flex-1 min-h-screen relative">
         <AppHeader
+          periodLinks={periodLinks}
           primaryAction={
             <button
               className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all"
@@ -90,7 +93,13 @@ export function TransactionsContent({
               </p>
             ) : (
               dayGroups.map((group) => (
-                <DayGroup group={group} key={group.dateIso} />
+                <DayGroup
+                  accounts={accounts}
+                  expenseCategories={expenseCategories}
+                  group={group}
+                  incomeCategories={incomeCategories}
+                  key={group.dateIso}
+                />
               ))
             )}
           </section>
@@ -108,7 +117,7 @@ export function TransactionsContent({
           </button>
         </div>
       </main>
-      <AddTransactionModal
+      <TransactionModal
         accounts={accounts}
         expenseCategories={expenseCategories}
         incomeCategories={incomeCategories}

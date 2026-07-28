@@ -42,6 +42,13 @@ export function findCategoryByIdForUser(
   });
 }
 
+export function findCategoryOwnedByUser(id: bigint, userId: bigint) {
+  return prisma.categories.findFirst({
+    where: { id, user_id: userId, is_active: true },
+    select: { id: true },
+  });
+}
+
 export function createCategory(input: CreateCategoryInput) {
   return prisma.categories.create({
     data: {
@@ -58,5 +65,33 @@ export function createCategory(input: CreateCategoryInput) {
       icon: true,
       color: true,
     },
+  });
+}
+
+interface UpdateCategoryInput {
+  name: string;
+  icon: string;
+  color: string;
+}
+
+export function updateCategoryForUser(
+  id: bigint,
+  userId: bigint,
+  input: UpdateCategoryInput,
+) {
+  return prisma.categories.updateMany({
+    where: { id, user_id: userId },
+    data: {
+      name: input.name,
+      icon: input.icon,
+      color: input.color,
+    },
+  });
+}
+
+export function softDeleteCategoryForUser(id: bigint, userId: bigint) {
+  return prisma.categories.updateMany({
+    where: { id, user_id: userId },
+    data: { is_active: false },
   });
 }

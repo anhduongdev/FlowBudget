@@ -4,6 +4,7 @@ import { formatDateIso } from "@/lib/date-range";
 import { getDayGroupLabel } from "@/lib/day-label";
 import { listActiveAccountsForUser } from "@/lib/services/account-service";
 import { getCurrentUser } from "@/lib/services/auth-service";
+import { listCategoriesForSelect } from "@/lib/services/category-service";
 import {
   getRecentTransactionsForUser,
   getTransactionCountForUser,
@@ -22,10 +23,18 @@ export default async function AccountsPage() {
     redirect("/login");
   }
 
-  const [accounts, recentGroups, totalTransactionCount] = await Promise.all([
+  const [
+    accounts,
+    recentGroups,
+    totalTransactionCount,
+    expenseCategories,
+    incomeCategories,
+  ] = await Promise.all([
     listActiveAccountsForUser(user.id),
     getRecentTransactionsForUser(user.id, RECENT_TRANSACTIONS_LIMIT),
     getTransactionCountForUser(user.id),
+    listCategoriesForSelect(user.id, "expense"),
+    listCategoriesForSelect(user.id, "income"),
   ]);
 
   const todayIso = formatDateIso(new Date());
@@ -33,8 +42,11 @@ export default async function AccountsPage() {
   return (
     <AccountsContent
       accounts={accounts}
+      expenseCategories={expenseCategories}
+      incomeCategories={incomeCategories}
       recentGroups={recentGroups.map((group) => ({
         ...group,
+        isFuture: group.dateIso > todayIso,
         label: getDayGroupLabel(group.dateIso, todayIso),
       }))}
       totalTransactionCount={totalTransactionCount}

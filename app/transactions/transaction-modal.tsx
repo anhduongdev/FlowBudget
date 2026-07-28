@@ -3,19 +3,34 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { ConfirmDeleteButton } from "@/app/_components/confirm-delete-button";
 import {
   createTransactionAction,
+  deleteTransactionAction,
+  updateTransactionAction,
   type TransactionFormState,
 } from "@/lib/actions/transaction-actions";
 import type { AccountOption } from "@/lib/services/account-service";
 import type { CategoryOption } from "@/lib/services/category-service";
 
-interface AddTransactionModalProps {
+export interface EditableTransaction {
+  id: string;
+  type: "income" | "expense" | "transfer";
+  accountId: string;
+  toAccountId: string | null;
+  categoryId: string | null;
+  amount: number;
+  transactionDateIso: string;
+  note: string | null;
+}
+
+interface TransactionModalProps {
   open: boolean;
   onClose: () => void;
   accounts: AccountOption[];
   expenseCategories: CategoryOption[];
   incomeCategories: CategoryOption[];
+  transaction?: EditableTransaction | null;
 }
 
 const TRANSACTION_TYPES = [
@@ -98,7 +113,7 @@ function SelectorChip({
   );
 }
 
-function SubmitButton({ disabled }: { disabled: boolean }) {
+function SubmitButton({ disabled, label }: { disabled: boolean; label: string }) {
   const { pending } = useFormStatus();
 
   return (
@@ -112,36 +127,59 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
           progress_activity
         </span>
       ) : (
-        "Lưu giao dịch"
+        label
       )}
     </button>
   );
 }
 
-export function AddTransactionModal({
+export function TransactionModal({
   open,
   onClose,
   accounts,
   expenseCategories,
   incomeCategories,
-}: AddTransactionModalProps) {
-  const [type, setType] = useState<TransactionType>("expense");
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
+  transaction,
+}: TransactionModalProps) {
+  const isEditing = Boolean(transaction);
+
+  function initialCategoryId(type: TransactionType): string {
+    if (transaction && transaction.type === type && transaction.categoryId) {
+      return transaction.categoryId;
+    }
+    return type === "income"
+      ? (incomeCategories[0]?.id ?? "")
+      : (expenseCategories[0]?.id ?? "");
+  }
+
+  const [type, setType] = useState<TransactionType>(transaction?.type ?? "expense");
+  const [accountId, setAccountId] = useState(
+    transaction?.accountId ?? accounts[0]?.id ?? "",
+  );
   const [toAccountId, setToAccountId] = useState(
-    accounts.find((a) => a.id !== accounts[0]?.id)?.id ?? "",
+    transaction?.toAccountId ??
+      accounts.find((a) => a.id !== accounts[0]?.id)?.id ??
+      "",
   );
   const [categoryId, setCategoryId] = useState<string>(
-    expenseCategories[0]?.id ?? "",
+    initialCategoryId(transaction?.type ?? "expense"),
   );
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(todayIsoDate());
-  const [note, setNote] = useState("");
+  const [amount, setAmount] = useState(
+    transaction ? String(transaction.amount) : "",
+  );
+  const [date, setDate] = useState(transaction?.transactionDateIso ?? todayIsoDate());
+  const [note, setNote] = useState(transaction?.note ?? "");
   const [openPicker, setOpenPicker] = useState<PickerName>(null);
   const [state, formAction] = useActionState(
-    createTransactionAction,
+    isEditing ? updateTransactionAction : createTransactionAction,
     initialState,
   );
   const [handledState, setHandledState] = useState(state);
+  const [deleteState, deleteFormAction] = useActionState(
+    deleteTransactionAction,
+    initialState,
+  );
+  const [handledDeleteState, setHandledDeleteState] = useState(deleteState);
 
   if (!open) return null;
 
@@ -160,13 +198,17 @@ export function AddTransactionModal({
     type === "transfer" ? activeType.color : (category?.color ?? activeType.color);
 
   function resetForm() {
-    setType("expense");
-    setAccountId(accounts[0]?.id ?? "");
-    setToAccountId(accounts.find((a) => a.id !== accounts[0]?.id)?.id ?? "");
-    setCategoryId(expenseCategories[0]?.id ?? "");
-    setAmount("");
-    setDate(todayIsoDate());
-    setNote("");
+    setType(transaction?.type ?? "expense");
+    setAccountId(transaction?.accountId ?? accounts[0]?.id ?? "");
+    setToAccountId(
+      transaction?.toAccountId ??
+        accounts.find((a) => a.id !== accounts[0]?.id)?.id ??
+        "",
+    );
+    setCategoryId(initialCategoryId(transaction?.type ?? "expense"));
+    setAmount(transaction ? String(transaction.amount) : "");
+    setDate(transaction?.transactionDateIso ?? todayIsoDate());
+    setNote(transaction?.note ?? "");
     setOpenPicker(null);
   }
 
@@ -181,12 +223,17 @@ export function AddTransactionModal({
       handleClose();
     }
   }
+  if (deleteState !== handledDeleteState) {
+    setHandledDeleteState(deleteState);
+    if (deleteState.success) {
+      handleClose();
+    }
+  }
 
   function selectType(next: TransactionType) {
     setType(next);
     setOpenPicker(null);
-    if (next === "income") setCategoryId(incomeCategories[0]?.id ?? "");
-    if (next === "expense") setCategoryId(expenseCategories[0]?.id ?? "");
+    setCategoryId(initialCategoryId(next));
   }
 
   function togglePicker(name: PickerName) {
@@ -204,7 +251,7 @@ export function AddTransactionModal({
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant/30">
           <h3 className="text-lg font-bold text-on-surface">
-            Thêm giao dịch
+            {isEditing ? "Sửa giao dịch" : "Thêm giao dịch"}
           </h3>
           <button
             className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest/40 transition-colors"
@@ -229,6 +276,9 @@ export function AddTransactionModal({
           </div>
         ) : (
           <form action={formAction} className="p-6 space-y-5">
+            {isEditing && (
+              <input name="id" type="hidden" value={transaction!.id} />
+            )}
             <input name="type" type="hidden" value={type} />
             <input name="accountId" type="hidden" value={account?.id ?? ""} />
             {type === "transfer" && (
@@ -464,8 +514,29 @@ export function AddTransactionModal({
               >
                 Hủy
               </button>
-              <SubmitButton disabled={!account} />
+              <SubmitButton
+                disabled={!account}
+                label={isEditing ? "Cập nhật giao dịch" : "Lưu giao dịch"}
+              />
             </div>
+          </form>
+        )}
+
+        {isEditing && (
+          <form action={deleteFormAction} className="px-6 pb-6">
+            <input name="id" type="hidden" value={transaction!.id} />
+            {deleteState.message && (
+              <p
+                aria-live="polite"
+                className="font-label-md text-label-md text-error text-center mb-3"
+              >
+                {deleteState.message}
+              </p>
+            )}
+            <ConfirmDeleteButton
+              confirmLabel="Xoá giao dịch này? Số dư tài khoản sẽ được hoàn lại."
+              label="Xoá giao dịch"
+            />
           </form>
         )}
       </div>

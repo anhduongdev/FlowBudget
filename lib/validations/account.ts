@@ -20,3 +20,13 @@ export const createAccountSchema = z.object({
 });
 
 export type CreateAccountInput = z.infer<typeof createAccountSchema>;
+
+export const updateAccountSchema = createAccountSchema.omit({
+  initialBalance: true,
+});
+
+export type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
+
+export const accountIdSchema = z.object({
+  id: z.string().min(1, "Thiếu mã tài khoản"),
+});

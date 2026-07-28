@@ -15,3 +15,13 @@ export const createCategorySchema = z.object({
 });
 
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+
+export const updateCategorySchema = createCategorySchema.omit({
+  type: true,
+});
+
+export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
+
+export const categoryIdSchema = z.object({
+  id: z.string().min(1, "Thiếu mã danh mục"),
+});

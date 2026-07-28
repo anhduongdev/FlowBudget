@@ -34,3 +34,11 @@ export const createTransactionSchema = z
   });
 
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
+
+export const updateTransactionSchema = createTransactionSchema;
+
+export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
+
+export const transactionIdSchema = z.object({
+  id: z.string().min(1, "Thiếu mã giao dịch"),
+});

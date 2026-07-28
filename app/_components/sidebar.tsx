@@ -15,11 +15,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/transactions", label: "Giao dịch", icon: "payments" },
   { href: "/accounts", label: "Tài khoản", icon: "account_balance_wallet" },
   { href: "/categories", label: "Danh mục", icon: "category" },
-];
-
-const UNAVAILABLE_NAV_ITEMS: NavItem[] = [
-  { href: "#", label: "Ngân sách", icon: "account_balance" },
-  { href: "#", label: "Cài đặt", icon: "settings" },
+  { href: "/budgets", label: "Ngân sách", icon: "account_balance" },
+  { href: "/settings", label: "Cài đặt", icon: "settings" },
 ];
 
 interface SidebarProps {
@@ -65,26 +62,8 @@ export function Sidebar({ userName }: SidebarProps) {
             </li>
           );
         })}
-        {UNAVAILABLE_NAV_ITEMS.map((item) => (
-          <li key={item.label}>
-            <a
-              className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
-              href={item.href}
-            >
-              <span className="material-symbols-outlined">{item.icon}</span>
-              <span className="text-sm">{item.label}</span>
-            </a>
-          </li>
-        ))}
       </ul>
       <div className="mt-auto space-y-1 border-t border-slate-200 pt-6">
-        <a
-          className="flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
-          href="#"
-        >
-          <span className="material-symbols-outlined">help_outline</span>
-          <span className="text-sm">Hỗ trợ</span>
-        </a>
         <form action={logoutAction}>
           <button
             className="w-full flex items-center gap-3 py-3 px-4 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all"

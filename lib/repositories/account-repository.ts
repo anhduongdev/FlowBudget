@@ -4,7 +4,14 @@ import { prisma } from "@/lib/prisma";
 export function findActiveAccountsByUser(userId: bigint) {
   return prisma.accounts.findMany({
     where: { user_id: userId, is_active: true },
-    select: { id: true, name: true, icon: true, color: true, current_balance: true },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      icon: true,
+      color: true,
+      current_balance: true,
+    },
     orderBy: { sort_order: "asc" },
   });
 }
@@ -45,5 +52,35 @@ export function createAccount(input: CreateAccountInput) {
       color: true,
       current_balance: true,
     },
+  });
+}
+
+interface UpdateAccountInput {
+  name: string;
+  type: accounts_type;
+  icon: string;
+  color: string;
+}
+
+export function updateAccountForUser(
+  id: bigint,
+  userId: bigint,
+  input: UpdateAccountInput,
+) {
+  return prisma.accounts.updateMany({
+    where: { id, user_id: userId },
+    data: {
+      name: input.name,
+      type: input.type,
+      icon: input.icon,
+      color: input.color,
+    },
+  });
+}
+
+export function softDeleteAccountForUser(id: bigint, userId: bigint) {
+  return prisma.accounts.updateMany({
+    where: { id, user_id: userId },
+    data: { is_active: false },
   });
 }

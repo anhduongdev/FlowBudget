@@ -9,6 +9,9 @@ import {
   createUser,
   findUserByEmail,
   findUserById,
+  findUserCredentialsById,
+  updateUserName,
+  updateUserPassword,
 } from "@/lib/repositories/user-repository";
 import type { RegisterInput, LoginInput } from "@/lib/validations/auth";
 
@@ -61,3 +64,29 @@ export const getCurrentUser = cache(async () => {
   }
   return findUserById(BigInt(userId));
 });
+
+export async function updateUserProfile(userId: bigint, name: string) {
+  return updateUserName(userId, name);
+}
+
+export async function changeUserPassword(
+  userId: bigint,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const credentials = await findUserCredentialsById(userId);
+  if (!credentials) {
+    throw new InvalidCredentialsError("Người dùng không tồn tại.");
+  }
+
+  const isCurrentPasswordValid = await verifyPassword(
+    currentPassword,
+    credentials.password_hash,
+  );
+  if (!isCurrentPasswordValid) {
+    throw new InvalidCredentialsError("Mật khẩu hiện tại không đúng.");
+  }
+
+  const newPasswordHash = await hashPassword(newPassword);
+  await updateUserPassword(userId, newPasswordHash);
+}

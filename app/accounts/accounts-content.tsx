@@ -1,20 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useState } from "react";
 import {
   DayGroup,
   type TransactionDayGroupView,
 } from "@/app/_components/transaction-day-group";
 import { formatVnd } from "@/lib/format";
 import type { AccountOption } from "@/lib/services/account-service";
+import type { CategoryOption } from "@/lib/services/category-service";
 import { AppHeader } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
+import { QuickAddTransactionButton } from "../dashboard/quick-add-transaction-button";
+import { AccountFormModal } from "./account-form-modal";
 import { AddAccountButton } from "./add-account-button";
 
 interface AccountsContentProps {
   userName: string;
   accounts: AccountOption[];
+  expenseCategories: CategoryOption[];
+  incomeCategories: CategoryOption[];
   recentGroups: TransactionDayGroupView[];
   totalTransactionCount: number;
 }
@@ -22,18 +27,28 @@ interface AccountsContentProps {
 function AccountCard({
   account,
   isPrimary,
+  onEdit,
 }: {
   account: AccountOption;
   isPrimary: boolean;
+  onEdit: (account: AccountOption) => void;
 }) {
   return (
     <div
-      className={`group relative flex items-center p-6 bg-white rounded-[24px] transition-all duration-300 cursor-pointer ${
+      className={`group relative flex items-center p-6 bg-white rounded-[24px] transition-all duration-300 ${
         isPrimary
           ? "border-2 border-primary/20 hover:shadow-xl ring-offset-2 hover:ring-2 ring-primary/10"
           : "border border-outline-variant/30 hover:shadow-lg"
       }`}
     >
+      <button
+        aria-label={`Sửa tài khoản ${account.name}`}
+        className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 hover:bg-surface-container-low transition-all"
+        onClick={() => onEdit(account)}
+        type="button"
+      >
+        <span className="material-symbols-outlined text-lg">edit</span>
+      </button>
       <div className="relative">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center text-white"
@@ -85,48 +100,14 @@ function AccountCard({
 export function AccountsContent({
   userName,
   accounts,
+  expenseCategories,
+  incomeCategories,
   recentGroups,
   totalTransactionCount,
 }: AccountsContentProps) {
-  useEffect(() => {
-    const groups = document.querySelectorAll<HTMLElement>(".group");
-    const onMouseEnter = (e: Event) => {
-      (e.currentTarget as HTMLElement).style.transition =
-        "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
-    };
-    groups.forEach((card) => {
-      card.addEventListener("mouseenter", onMouseEnter);
-    });
-
-    const searchInput = document.querySelector<HTMLInputElement>(
-      'input[type="text"]',
-    );
-    const searchContainer = searchInput?.parentElement;
-    const onFocus = () => {
-      searchContainer?.classList.add("ring-2", "ring-primary/20", "bg-white");
-    };
-    const onBlur = () => {
-      searchContainer?.classList.remove(
-        "ring-2",
-        "ring-primary/20",
-        "bg-white",
-      );
-    };
-    if (searchInput && searchContainer) {
-      searchInput.addEventListener("focus", onFocus);
-      searchInput.addEventListener("blur", onBlur);
-    }
-
-    return () => {
-      groups.forEach((card) => {
-        card.removeEventListener("mouseenter", onMouseEnter);
-      });
-      if (searchInput && searchContainer) {
-        searchInput.removeEventListener("focus", onFocus);
-        searchInput.removeEventListener("blur", onBlur);
-      }
-    };
-  }, []);
+  const [editingAccount, setEditingAccount] = useState<AccountOption | null>(
+    null,
+  );
 
   return (
     <>
@@ -147,22 +128,23 @@ export function AccountsContent({
               account={account}
               isPrimary={index === 0}
               key={account.id}
+              onEdit={setEditingAccount}
             />
           ))}
           <AddAccountButton />
         </section>
+        <AccountFormModal
+          account={editingAccount}
+          key={editingAccount?.id ?? "closed"}
+          onClose={() => setEditingAccount(null)}
+          open={editingAccount !== null}
+        />
         {/* Recent transactions */}
         <section className="space-y-6">
           <div className="flex justify-between items-end mb-4">
             <h2 className="font-headline-md text-headline-md text-on-surface">
               Giao dịch gần đây
             </h2>
-            <button className="flex items-center gap-2 text-primary font-label-md text-label-md hover:underline decoration-2 underline-offset-4 transition-all">
-              Xem báo cáo{" "}
-              <span className="material-symbols-outlined">
-                arrow_forward
-              </span>
-            </button>
           </div>
           {recentGroups.length === 0 ? (
             <p className="text-center text-on-surface-variant py-xl">
@@ -171,7 +153,13 @@ export function AccountsContent({
           ) : (
             <div className="space-y-6">
               {recentGroups.map((group) => (
-                <DayGroup group={group} key={group.dateIso} />
+                <DayGroup
+                  accounts={accounts}
+                  expenseCategories={expenseCategories}
+                  group={group}
+                  incomeCategories={incomeCategories}
+                  key={group.dateIso}
+                />
               ))}
             </div>
           )}
@@ -188,10 +176,12 @@ export function AccountsContent({
         </section>
         </div>
       </main>
-      {/* Floating Action Button for Mobile */}
-      <button className="md:hidden fixed bottom-8 right-8 w-16 h-16 rounded-full bg-primary text-on-primary shadow-2xl flex items-center justify-center z-[100] active:scale-95 transition-transform">
-        <span className="material-symbols-outlined text-3xl">add</span>
-      </button>
+      <QuickAddTransactionButton
+        accounts={accounts}
+        expenseCategories={expenseCategories}
+        incomeCategories={incomeCategories}
+        variant="fab"
+      />
     </>
   );
 }

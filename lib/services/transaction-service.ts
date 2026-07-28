@@ -14,10 +14,13 @@ import { findCategoryByIdForUser } from "@/lib/repositories/category-repository"
 import {
   countTransactionsForUser,
   createTransactionWithBalanceUpdates,
+  deleteTransactionWithBalanceUpdates,
   findRecentTransactionsForUser,
+  findTransactionByIdForUser,
   findTransactionsForUserInRange,
   sumTransactionAmountByDateForUser,
   sumTransactionAmountForUser,
+  updateTransactionWithBalanceUpdates,
   type AccountBalanceAdjustment,
 } from "@/lib/repositories/transaction-repository";
 
@@ -126,6 +129,7 @@ export function buildWeekOverWeekInsight(
 
 export class InvalidAccountError extends Error {}
 export class InvalidCategoryError extends Error {}
+export class TransactionNotFoundError extends Error {}
 
 export interface CreateTransactionForUserInput {
   type: transactions_type;
@@ -136,6 +140,8 @@ export interface CreateTransactionForUserInput {
   transactionDate: Date;
   note: string | null;
 }
+
+export type UpdateTransactionForUserInput = CreateTransactionForUserInput;
 
 function buildBalanceAdjustments(
   type: transactions_type,
@@ -155,10 +161,24 @@ function buildBalanceAdjustments(
   ];
 }
 
-export async function createTransactionForUser(
+function reverseBalanceAdjustments(
+  adjustments: AccountBalanceAdjustment[],
+): AccountBalanceAdjustment[] {
+  return adjustments.map((adjustment) => ({
+    ...adjustment,
+    operation: adjustment.operation === "increment" ? "decrement" : "increment",
+  }));
+}
+
+interface ResolvedTransactionRefs {
+  toAccountId: bigint | null;
+  categoryId: bigint | null;
+}
+
+async function resolveTransactionAccountsAndCategory(
   userId: bigint,
   input: CreateTransactionForUserInput,
-) {
+): Promise<ResolvedTransactionRefs> {
   const account = await findAccountByIdForUser(input.accountId, userId);
   if (!account) {
     throw new InvalidAccountError("Tài khoản không hợp lệ.");
@@ -195,6 +215,16 @@ export async function createTransactionForUser(
     categoryId = category.id;
   }
 
+  return { toAccountId, categoryId };
+}
+
+export async function createTransactionForUser(
+  userId: bigint,
+  input: CreateTransactionForUserInput,
+) {
+  const { toAccountId, categoryId } =
+    await resolveTransactionAccountsAndCategory(userId, input);
+
   const amountAsDecimalString = input.amount.toFixed(2);
   const adjustments = buildBalanceAdjustments(
     input.type,
@@ -218,16 +248,84 @@ export async function createTransactionForUser(
   );
 }
 
+export async function updateTransactionForUser(
+  userId: bigint,
+  id: bigint,
+  input: UpdateTransactionForUserInput,
+) {
+  const existing = await findTransactionByIdForUser(id, userId);
+  if (!existing) {
+    throw new TransactionNotFoundError("Giao dịch không tồn tại.");
+  }
+
+  const { toAccountId, categoryId } =
+    await resolveTransactionAccountsAndCategory(userId, input);
+
+  const reversalAdjustments = reverseBalanceAdjustments(
+    buildBalanceAdjustments(
+      existing.type,
+      existing.account_id,
+      existing.to_account_id,
+      existing.amount.toFixed(2),
+    ),
+  );
+
+  const amountAsDecimalString = input.amount.toFixed(2);
+  const newAdjustments = buildBalanceAdjustments(
+    input.type,
+    input.accountId,
+    toAccountId,
+    amountAsDecimalString,
+  );
+
+  return updateTransactionWithBalanceUpdates(
+    id,
+    userId,
+    {
+      type: input.type,
+      accountId: input.accountId,
+      toAccountId,
+      categoryId,
+      amount: amountAsDecimalString,
+      transactionDate: input.transactionDate,
+      note: input.note,
+    },
+    reversalAdjustments,
+    newAdjustments,
+  );
+}
+
+export async function deleteTransactionForUser(userId: bigint, id: bigint) {
+  const existing = await findTransactionByIdForUser(id, userId);
+  if (!existing) {
+    throw new TransactionNotFoundError("Giao dịch không tồn tại.");
+  }
+
+  const reversalAdjustments = reverseBalanceAdjustments(
+    buildBalanceAdjustments(
+      existing.type,
+      existing.account_id,
+      existing.to_account_id,
+      existing.amount.toFixed(2),
+    ),
+  );
+
+  return deleteTransactionWithBalanceUpdates(id, userId, reversalAdjustments);
+}
+
 export interface TransactionListItem {
   id: string;
   type: transactions_type;
   amount: number;
   transactionDateIso: string;
   note: string | null;
+  categoryId: string | null;
   categoryName: string | null;
   icon: string;
   color: string;
+  accountId: string;
   accountName: string;
+  toAccountId: string | null;
   toAccountName: string | null;
 }
 
@@ -263,7 +361,10 @@ function mapRowsToDayGroups(rows: TransactionRow[]): TransactionDayGroup[] {
       color: isTransfer
         ? TRANSFER_COLOR
         : (row.categories?.color ?? DEFAULT_CATEGORY_COLOR),
+      categoryId: row.category_id?.toString() ?? null,
+      accountId: row.account_id.toString(),
       accountName: row.accounts_transactions_account_idToaccounts.name,
+      toAccountId: row.to_account_id?.toString() ?? null,
       toAccountName:
         row.accounts_transactions_to_account_idToaccounts?.name ?? null,
     };
