@@ -45,6 +45,9 @@ export const CATEGORY_ICONS = [
   "more_horiz",
 ] as const;
 
+export const DEFAULT_CATEGORY_ICON = "category";
+export const DEFAULT_CATEGORY_COLOR = "#94a3b8";
+
 export const CATEGORY_COLORS = [
   "#3b82f6",
   "#6366f1",

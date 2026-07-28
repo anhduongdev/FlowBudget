@@ -1,21 +1,72 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import {
+  getCurrentMonthRange,
+  getCurrentWeekRange,
+  getPreviousWeekRange,
+} from "@/lib/date-range";
+import { formatVnd } from "@/lib/format";
 import { getCurrentUser } from "@/lib/services/auth-service";
+import {
+  buildMonthlyBudgetSummary,
+  getBudgetAmountForMonth,
+} from "@/lib/services/budget-service";
+import { getCategoriesWithMonthlySpending } from "@/lib/services/category-service";
+import {
+  buildWeekOverWeekInsight,
+  getCurrentWeekExpenseBreakdown,
+  getMonthlyExpenseTotal,
+  getPreviousWeekExpenseTotal,
+} from "@/lib/services/transaction-service";
 import { AppHeader } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
 import { AddCategoryButton } from "./add-category-button";
+import { CategoryTile } from "./category-tile";
+import { getWeekInsightMessage } from "./insight-message";
+import { SetBudgetButton } from "./set-budget-button";
 
 export const metadata: Metadata = {
   title: "FlowBudget - Danh mục chi tiêu",
 };
 
 const GLASS_CARD_BORDER_STYLE = { borderColor: "rgba(226, 232, 240, 0.5)" };
+const WEEKDAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
 
 export default async function CategoriesPage() {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");
   }
+
+  const monthRange = getCurrentMonthRange();
+  const weekRange = getCurrentWeekRange();
+  const previousWeekRange = getPreviousWeekRange();
+
+  const [
+    expenseCategories,
+    incomeCategories,
+    monthlyExpenseTotal,
+    weeklyBreakdown,
+    previousWeekTotal,
+    budgetAmount,
+  ] = await Promise.all([
+    getCategoriesWithMonthlySpending(user.id, "expense", monthRange),
+    getCategoriesWithMonthlySpending(user.id, "income", monthRange),
+    getMonthlyExpenseTotal(user.id, monthRange),
+    getCurrentWeekExpenseBreakdown(user.id, weekRange),
+    getPreviousWeekExpenseTotal(user.id, previousWeekRange),
+    getBudgetAmountForMonth(user.id, monthRange),
+  ]);
+
+  const budgetSummary = buildMonthlyBudgetSummary(
+    budgetAmount,
+    monthlyExpenseTotal,
+  );
+  const weekInsight = buildWeekOverWeekInsight(
+    weeklyBreakdown.weekTotal,
+    previousWeekTotal,
+  );
+  const weekInsightMessage = getWeekInsightMessage(weekInsight);
 
   return (
     <>
@@ -48,16 +99,31 @@ export default async function CategoriesPage() {
                       Tổng chi tiêu
                     </p>
                     <p className="font-headline-lg text-headline-lg text-primary">
-                      $4,280.50
+                      {formatVnd(monthlyExpenseTotal)}
                     </p>
                   </div>
                   <div className="border-l border-outline-variant/30 pl-8">
                     <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">
                       Hạn mức còn lại
                     </p>
-                    <p className="font-headline-lg text-headline-lg text-tertiary-container">
-                      $1,719.50
+                    <p
+                      className={`font-headline-lg text-headline-lg ${
+                        budgetSummary.isOverBudget
+                          ? "text-error"
+                          : "text-tertiary-container"
+                      }`}
+                    >
+                      {budgetSummary.hasBudget
+                        ? formatVnd(budgetSummary.remainingAmount)
+                        : "Chưa đặt hạn mức"}
                     </p>
+                    <SetBudgetButton
+                      currentAmount={
+                        budgetSummary.hasBudget
+                          ? budgetSummary.budgetAmount
+                          : null
+                      }
+                    />
                   </div>
                 </div>
               </div>
@@ -72,27 +138,35 @@ export default async function CategoriesPage() {
                   className="circle-bg"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 ></path>
-                <path
-                  className="circle stroke-primary"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                  strokeDasharray="70, 100"
-                ></path>
-                <path
-                  className="circle stroke-[#fb7185]"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                  strokeDasharray="20, 100"
-                  strokeDashoffset="-70"
-                ></path>
+                {budgetSummary.hasBudget && (
+                  <path
+                    className={
+                      budgetSummary.isOverBudget
+                        ? "circle stroke-[#fb7185]"
+                        : "circle stroke-primary"
+                    }
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
+                    strokeDasharray={`${budgetSummary.spentPercent}, 100`}
+                  ></path>
+                )}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <p className="font-label-sm text-label-sm text-on-surface-variant">
                   Chi phí
                 </p>
                 <p className="font-headline-md text-headline-md text-on-surface">
-                  8.505.000 đ
+                  {formatVnd(monthlyExpenseTotal)}
                 </p>
-                <p className="font-label-sm text-label-sm text-tertiary-container">
-                  0 đ
+                <p
+                  className={`font-label-sm text-label-sm ${
+                    budgetSummary.isOverBudget
+                      ? "text-error"
+                      : "text-tertiary-container"
+                  }`}
+                >
+                  {budgetSummary.hasBudget
+                    ? formatVnd(budgetSummary.remainingAmount)
+                    : "Chưa đặt hạn mức"}
                 </p>
               </div>
             </div>
@@ -116,176 +190,15 @@ export default async function CategoriesPage() {
               </button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-gutter">
-              {/* Category Item 1 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Bách hóa
+              {expenseCategories.length === 0 ? (
+                <p className="col-span-full font-body-md text-body-md text-on-surface-variant">
+                  Chưa có danh mục chi tiêu nào.
                 </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#3b82f6] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg shadow-primary/20">
-                  <span className="material-symbols-outlined text-3xl text-white">
-                    shopping_basket
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-[#3b82f6]">
-                  4.945.000 đ
-                </p>
-              </div>
-              {/* Category Item 2 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Nhà hàng
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#f1f5f9] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-outline-variant/30">
-                  <span className="material-symbols-outlined text-3xl text-[#64748b]">
-                    restaurant
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-on-surface-variant">
-                  0 đ
-                </p>
-              </div>
-              {/* Category Item 3 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Giải trí
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#fae8ff] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-3xl text-[#d946ef]">
-                    confirmation_number
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-on-surface-variant">
-                  0 đ
-                </p>
-              </div>
-              {/* Category Item 4 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Vận chuyển
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#fff7ed] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-3xl text-[#f97316]">
-                    directions_bus
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-on-surface-variant">
-                  0 đ
-                </p>
-              </div>
-              {/* Category Item 5 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Sức khoẻ
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#f0fdf4] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-3xl text-[#22c55e]">
-                    favorite
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-on-surface-variant">
-                  0 đ
-                </p>
-              </div>
-              {/* Category Item 6 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Mua sắm
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#f8fafc] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-outline-variant/30">
-                  <span className="material-symbols-outlined text-3xl text-[#64748b]">
-                    shopping_bag
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-on-surface-variant">
-                  0 đ
-                </p>
-              </div>
-              {/* Category Item 7 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Phòng trọ
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#f43f5e] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg shadow-error/20">
-                  <span className="material-symbols-outlined text-3xl text-white">
-                    home
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-[#f43f5e]">
-                  1.700.000 đ
-                </p>
-              </div>
-              {/* Category Item 8 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Điện, nước
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#e11d48] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg shadow-error/20">
-                  <span className="material-symbols-outlined text-3xl text-white">
-                    bolt
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-[#e11d48]">
-                  520.000 đ
-                </p>
-              </div>
-              {/* Category Item 9 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Nước 1
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#eff6ff] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-3xl text-[#3b82f6]">
-                    water_drop
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-on-surface-variant">
-                  0 đ
-                </p>
-              </div>
-              {/* Add New Category */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Thêm...
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  0 đ
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#94a3b8] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-3xl text-white">
-                    keyboard_arrow_down
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-[#94a3b8]">
-                  1.340.000 đ
-                </p>
-              </div>
+              ) : (
+                expenseCategories.map((category) => (
+                  <CategoryTile category={category} key={category.id} />
+                ))
+              )}
             </div>
           </section>
           {/* Income Categories Section */}
@@ -301,57 +214,15 @@ export default async function CategoriesPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-gutter">
-              {/* Income Category 1 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Lương chính
+              {incomeCategories.length === 0 ? (
+                <p className="col-span-full font-body-md text-body-md text-on-surface-variant">
+                  Chưa có danh mục thu nhập nào.
                 </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  1 giao dịch
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#dcfce7] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-3xl text-[#16a34a]">
-                    payments
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-[#16a34a]">
-                  5.000.000 đ
-                </p>
-              </div>
-              {/* Income Category 2 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Đầu tư
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  5 giao dịch
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#dbeafe] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-3xl text-[#2563eb]">
-                    trending_up
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-[#2563eb]">
-                  1.200.000 đ
-                </p>
-              </div>
-              {/* Income Category 3 */}
-              <div className="flex flex-col items-center text-center group cursor-pointer">
-                <p className="font-label-md text-label-md text-on-surface mb-1">
-                  Quà tặng
-                </p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant/60 mb-3">
-                  2 giao dịch
-                </p>
-                <div className="w-16 h-16 rounded-full bg-[#fff1f2] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-3xl text-[#e11d48]">
-                    card_giftcard
-                  </span>
-                </div>
-                <p className="font-label-md text-label-md text-[#e11d48]">
-                  300.000 đ
-                </p>
-              </div>
+              ) : (
+                incomeCategories.map((category) => (
+                  <CategoryTile category={category} key={category.id} />
+                ))
+              )}
             </div>
           </section>
           {/* Bottom Analysis Bento */}
@@ -364,57 +235,35 @@ export default async function CategoriesPage() {
                 Thống kê theo thời gian
               </h4>
               <div className="h-64 flex items-end justify-between gap-4">
-                <div
-                  className="w-full bg-surface-container rounded-t-lg relative"
-                  style={{ height: "60%" }}
-                >
-                  <div className="absolute inset-0 bg-primary/20 rounded-t-lg transition-all hover:bg-primary/30 cursor-pointer"></div>
-                </div>
-                <div
-                  className="w-full bg-surface-container rounded-t-lg relative"
-                  style={{ height: "40%" }}
-                >
-                  <div className="absolute inset-0 bg-primary/20 rounded-t-lg transition-all hover:bg-primary/30 cursor-pointer"></div>
-                </div>
-                <div
-                  className="w-full bg-surface-container rounded-t-lg relative"
-                  style={{ height: "85%" }}
-                >
-                  <div className="absolute inset-0 bg-primary/20 rounded-t-lg transition-all hover:bg-primary/30 cursor-pointer"></div>
-                </div>
-                <div
-                  className="w-full bg-surface-container rounded-t-lg relative"
-                  style={{ height: "55%" }}
-                >
-                  <div className="absolute inset-0 bg-primary/20 rounded-t-lg transition-all hover:bg-primary/30 cursor-pointer"></div>
-                </div>
-                <div
-                  className="w-full bg-surface-container rounded-t-lg relative"
-                  style={{ height: "70%" }}
-                >
-                  <div className="absolute inset-0 bg-primary/20 rounded-t-lg transition-all hover:bg-primary/30 cursor-pointer"></div>
-                </div>
-                <div
-                  className="w-full bg-surface-container rounded-t-lg relative"
-                  style={{ height: "95%" }}
-                >
-                  <div className="absolute inset-0 bg-primary rounded-t-lg transition-all hover:bg-primary/90 cursor-pointer"></div>
-                </div>
-                <div
-                  className="w-full bg-surface-container rounded-t-lg relative"
-                  style={{ height: "50%" }}
-                >
-                  <div className="absolute inset-0 bg-primary/20 rounded-t-lg transition-all hover:bg-primary/30 cursor-pointer"></div>
-                </div>
+                {weeklyBreakdown.barHeightPercents.map((percent, index) => (
+                  <div
+                    className="w-full bg-surface-container rounded-t-lg relative"
+                    key={WEEKDAY_LABELS[index]}
+                    style={{ height: `${percent}%` }}
+                  >
+                    <div
+                      className={`absolute inset-0 rounded-t-lg transition-all cursor-pointer ${
+                        index === weeklyBreakdown.todayIndex
+                          ? "bg-primary hover:bg-primary/90"
+                          : "bg-primary/20 hover:bg-primary/30"
+                      }`}
+                    ></div>
+                  </div>
+                ))}
               </div>
               <div className="flex justify-between mt-4 text-on-surface-variant font-label-sm text-label-sm px-1">
-                <span>T2</span>
-                <span>T3</span>
-                <span>T4</span>
-                <span>T5</span>
-                <span>T6</span>
-                <span className="text-primary font-bold">T7</span>
-                <span>CN</span>
+                {WEEKDAY_LABELS.map((label, index) => (
+                  <span
+                    className={
+                      index === weeklyBreakdown.todayIndex
+                        ? "text-primary font-bold"
+                        : ""
+                    }
+                    key={label}
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
             <div
@@ -426,8 +275,7 @@ export default async function CategoriesPage() {
                   Thông tin thú vị
                 </h4>
                 <p className="font-body-md text-body-md text-on-surface-variant">
-                  Bạn đã chi tiêu ít hơn 12% cho <strong>Bách hóa</strong> so
-                  với tuần trước.
+                  {weekInsightMessage}
                 </p>
               </div>
               <div className="mt-8">

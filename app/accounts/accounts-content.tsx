@@ -1,14 +1,93 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
+import {
+  DayGroup,
+  type TransactionDayGroupView,
+} from "@/app/_components/transaction-day-group";
+import { formatVnd } from "@/lib/format";
+import type { AccountOption } from "@/lib/services/account-service";
 import { AppHeader } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
+import { AddAccountButton } from "./add-account-button";
 
 interface AccountsContentProps {
   userName: string;
+  accounts: AccountOption[];
+  recentGroups: TransactionDayGroupView[];
+  totalTransactionCount: number;
 }
 
-export function AccountsContent({ userName }: AccountsContentProps) {
+function AccountCard({
+  account,
+  isPrimary,
+}: {
+  account: AccountOption;
+  isPrimary: boolean;
+}) {
+  return (
+    <div
+      className={`group relative flex items-center p-6 bg-white rounded-[24px] transition-all duration-300 cursor-pointer ${
+        isPrimary
+          ? "border-2 border-primary/20 hover:shadow-xl ring-offset-2 hover:ring-2 ring-primary/10"
+          : "border border-outline-variant/30 hover:shadow-lg"
+      }`}
+    >
+      <div className="relative">
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center text-white"
+          style={{ backgroundColor: account.color }}
+        >
+          <span
+            className="material-symbols-outlined text-3xl"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            {account.icon}
+          </span>
+        </div>
+        {isPrimary && (
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center">
+            <span
+              className="material-symbols-outlined text-[14px] text-white"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              star
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="ml-6 flex-1">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="font-label-md text-label-md text-on-surface-variant mb-0.5">
+              {account.name}
+            </h3>
+            <span
+              className={`font-headline-md text-headline-md font-bold ${
+                isPrimary ? "text-primary" : "text-on-surface"
+              }`}
+            >
+              {formatVnd(account.currentBalance)}
+            </span>
+          </div>
+          {isPrimary && (
+            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              Chính
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AccountsContent({
+  userName,
+  accounts,
+  recentGroups,
+  totalTransactionCount,
+}: AccountsContentProps) {
   useEffect(() => {
     const groups = document.querySelectorAll<HTMLElement>(".group");
     const onMouseEnter = (e: Event) => {
@@ -56,90 +135,28 @@ export function AccountsContent({ userName }: AccountsContentProps) {
       <main className="ml-72 min-h-screen">
         <AppHeader title="Tài khoản" />
         <div className="p-10">
-        {/* Account Cards Grid - Updated to match IMAGE_13 style */}
+        {/* Account Cards Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-xxl">
-          {/* Account: Thẻ (Primary) */}
-          <div className="group relative flex items-center p-6 bg-white border-2 border-primary/20 rounded-[24px] transition-all duration-300 hover:shadow-xl cursor-pointer ring-offset-2 hover:ring-2 ring-primary/10">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-2xl bg-[#5C6BC0] flex items-center justify-center text-white">
-                <span
-                  className="material-symbols-outlined text-3xl"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  credit_card
-                </span>
-              </div>
-              {/* 'Chính' tag / star icon indicator from IMAGE_13 */}
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center">
-                <span
-                  className="material-symbols-outlined text-[14px] text-white"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  star
-                </span>
-              </div>
-            </div>
-            <div className="ml-6 flex-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-label-md text-label-md text-on-surface-variant mb-0.5">
-                    Thẻ
-                  </h3>
-                  <span className="font-headline-md text-headline-md font-bold text-primary">
-                    9.166.000 ₫
-                  </span>
-                </div>
-                <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                  Chính
-                </span>
-              </div>
-            </div>
-          </div>
-          {/* Account: Tiền mặt */}
-          <div className="group relative flex items-center p-6 bg-white border border-outline-variant/30 rounded-[24px] transition-all duration-300 hover:shadow-lg cursor-pointer">
-            <div className="w-16 h-16 rounded-2xl bg-[#26A69A] flex items-center justify-center text-white">
-              <span
-                className="material-symbols-outlined text-3xl"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                account_balance_wallet
-              </span>
-            </div>
-            <div className="ml-6 flex-1">
-              <h3 className="font-label-md text-label-md text-on-surface-variant mb-0.5">
-                Tiền mặt
-              </h3>
-              <span className="font-headline-md text-headline-md font-bold text-on-surface">
-                0 ₫
-              </span>
-            </div>
-          </div>
-          {/* Add Account Button */}
-          <button className="group relative flex items-center justify-center gap-4 p-6 border-2 border-dashed border-outline-variant/50 rounded-[24px] hover:border-primary/50 hover:bg-primary/5 transition-all duration-300">
-            <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-              <span className="material-symbols-outlined text-2xl">add</span>
-            </div>
-            <span className="font-label-md text-label-md text-on-surface">
-              Thêm tài khoản
-            </span>
-          </button>
+          {accounts.length === 0 && (
+            <p className="font-body-md text-body-md text-on-surface-variant self-center">
+              Bạn chưa có tài khoản nào. Hãy thêm tài khoản đầu tiên.
+            </p>
+          )}
+          {accounts.map((account, index) => (
+            <AccountCard
+              account={account}
+              isPrimary={index === 0}
+              key={account.id}
+            />
+          ))}
+          <AddAccountButton />
         </section>
-        {/* Transaction List - Updated to match date-grouped format from IMAGE_15 */}
+        {/* Recent transactions */}
         <section className="space-y-6">
           <div className="flex justify-between items-end mb-4">
-            <div>
-              <h2 className="font-headline-md text-headline-md text-on-surface">
-                Giao dịch gần đây
-              </h2>
-              <div className="flex items-center gap-2 text-on-surface-variant mt-1">
-                <span className="material-symbols-outlined text-sm">
-                  calendar_month
-                </span>
-                <span className="font-body-md text-body-md">
-                  11 Thg 7 – 10 Thg 8 2026
-                </span>
-              </div>
-            </div>
+            <h2 className="font-headline-md text-headline-md text-on-surface">
+              Giao dịch gần đây
+            </h2>
             <button className="flex items-center gap-2 text-primary font-label-md text-label-md hover:underline decoration-2 underline-offset-4 transition-all">
               Xem báo cáo{" "}
               <span className="material-symbols-outlined">
@@ -147,213 +164,27 @@ export function AccountsContent({ userName }: AccountsContentProps) {
               </span>
             </button>
           </div>
-          <div className="glass-card rounded-[32px] overflow-hidden border border-outline-variant/30 shadow-sm">
-            {/* Group: Day 25 */}
-            <div className="border-b border-outline-variant/10">
-              <div className="bg-surface-container-low/30 px-8 py-3 flex justify-between items-center">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-light text-primary/80">
-                    25
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold text-outline tracking-wider leading-none mb-0.5">
-                      Hôm nay
-                    </span>
-                    <span className="text-xs font-semibold text-on-surface-variant leading-none">
-                      Tháng 7 2026
-                    </span>
-                  </div>
-                </div>
-                <span className="font-label-md text-label-md text-error">
-                  - 239.000 ₫
-                </span>
-              </div>
-              <div className="divide-y divide-outline-variant/10 px-4">
-                {/* Transaction item */}
-                <div className="flex items-center justify-between p-4 group">
-                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-full bg-yellow-400/20 flex items-center justify-center text-yellow-600">
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_bag
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-label-md text-label-md text-on-surface">
-                        ShoppeVip
-                      </p>
-                      <div className="flex items-center gap-1.5 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>
-                        <span className="text-xs">Thẻ</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="font-label-md text-label-md text-error">
-                    29.000 ₫
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-4 group">
-                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center text-blue-600">
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-label-md text-label-md text-on-surface">
-                        Bách hóa
-                      </p>
-                      <div className="flex items-center gap-1.5 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>
-                        <span className="text-xs">Thẻ</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="font-label-md text-label-md text-error">
-                    210.000 ₫
-                  </span>
-                </div>
-              </div>
+          {recentGroups.length === 0 ? (
+            <p className="text-center text-on-surface-variant py-xl">
+              Chưa có giao dịch nào.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {recentGroups.map((group) => (
+                <DayGroup group={group} key={group.dateIso} />
+              ))}
             </div>
-            {/* Group: Day 24 */}
-            <div className="border-b border-outline-variant/10">
-              <div className="bg-surface-container-low/30 px-8 py-3 flex justify-between items-center">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-light text-on-surface/40">
-                    24
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold text-outline tracking-wider leading-none mb-0.5">
-                      Hôm qua
-                    </span>
-                    <span className="text-xs font-semibold text-on-surface-variant leading-none">
-                      Tháng 7 2026
-                    </span>
-                  </div>
-                </div>
-                <span className="font-label-md text-label-md text-error">
-                  - 80.000 ₫
-                </span>
-              </div>
-              <div className="divide-y divide-outline-variant/10 px-4">
-                <div className="flex items-center justify-between p-4 group">
-                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center text-blue-600">
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-label-md text-label-md text-on-surface">
-                        Bách hóa
-                      </p>
-                      <div className="flex items-center gap-1.5 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>
-                        <span className="text-xs">Thẻ</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="font-label-md text-label-md text-error">
-                    80.000 ₫
-                  </span>
-                </div>
-              </div>
+          )}
+          {totalTransactionCount > 0 && (
+            <div className="flex justify-center mt-8">
+              <Link
+                className="bg-surface-container-high hover:bg-primary hover:text-white transition-all text-on-surface px-8 py-3 rounded-full font-label-md"
+                href="/transactions"
+              >
+                Xem tất cả {totalTransactionCount} giao dịch
+              </Link>
             </div>
-            {/* Group: Day 23 */}
-            <div>
-              <div className="bg-surface-container-low/30 px-8 py-3 flex justify-between items-center">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-light text-on-surface/40">
-                    23
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold text-outline tracking-wider leading-none mb-0.5">
-                      Thứ năm
-                    </span>
-                    <span className="text-xs font-semibold text-on-surface-variant leading-none">
-                      Tháng 7 2026
-                    </span>
-                  </div>
-                </div>
-                <span className="font-label-md text-label-md text-error">
-                  - 493.000 ₫
-                </span>
-              </div>
-              <div className="divide-y divide-outline-variant/10 px-4">
-                <div className="flex items-center justify-between p-4 group">
-                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center text-blue-600">
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-label-md text-label-md text-on-surface">
-                        Bách hóa
-                      </p>
-                      <div className="flex items-center gap-1.5 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>
-                        <span className="text-xs">Thẻ</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="font-label-md text-label-md text-error">
-                    28.000 ₫
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-4 group">
-                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center text-blue-600">
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-label-md text-label-md text-on-surface">
-                        Bách hóa
-                      </p>
-                      <div className="flex items-center gap-1.5 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>
-                        <span className="text-xs">Thẻ</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="font-label-md text-label-md text-error">
-                    450.000 ₫
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-center mt-8">
-            <button className="bg-surface-container-high hover:bg-primary hover:text-white transition-all text-on-surface px-8 py-3 rounded-full font-label-md">
-              Xem tất cả 43 giao dịch
-            </button>
-          </div>
+          )}
         </section>
         </div>
       </main>

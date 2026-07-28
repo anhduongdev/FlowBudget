@@ -1,15 +1,35 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DayGroup,
+  type TransactionDayGroupView,
+} from "@/app/_components/transaction-day-group";
+import type { AccountOption } from "@/lib/services/account-service";
+import type { CategoryOption } from "@/lib/services/category-service";
 import { AppHeader } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
 import { AddTransactionModal } from "./add-transaction-modal";
 
 interface TransactionsContentProps {
   userName: string;
+  dayGroups: TransactionDayGroupView[];
+  accounts: AccountOption[];
+  expenseCategories: CategoryOption[];
+  incomeCategories: CategoryOption[];
+  filterFrom: string;
+  filterTo: string;
 }
 
-export function TransactionsContent({ userName }: TransactionsContentProps) {
+export function TransactionsContent({
+  userName,
+  dayGroups,
+  accounts,
+  expenseCategories,
+  incomeCategories,
+  filterFrom,
+  filterTo,
+}: TransactionsContentProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   return (
@@ -34,306 +54,45 @@ export function TransactionsContent({ userName }: TransactionsContentProps) {
         />
         {/* Content Canvas */}
         <div className="p-xl space-y-xl max-w-6xl mx-auto">
+          {/* Date range filter */}
+          <form className="flex flex-wrap items-center gap-3" method="get">
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
+              Từ
+              <input
+                className="border border-outline-variant rounded-lg px-3 py-1.5 text-sm"
+                defaultValue={filterFrom}
+                name="from"
+                type="date"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant">
+              Đến
+              <input
+                className="border border-outline-variant rounded-lg px-3 py-1.5 text-sm"
+                defaultValue={filterTo}
+                name="to"
+                type="date"
+              />
+            </label>
+            <button
+              className="bg-surface-container-high hover:bg-primary hover:text-white transition-all text-on-surface px-5 py-1.5 rounded-full text-sm font-semibold"
+              type="submit"
+            >
+              Lọc
+            </button>
+          </form>
+
           {/* Transactions List */}
           <section className="space-y-xl">
-            {/* Date Group: 25 THÁNG 7 */}
-            <div className="space-y-md">
-              <div className="flex justify-between items-center pb-sm border-b border-outline-variant/30 px-2">
-                <div className="flex items-center gap-4">
-                  <span className="text-[40px] font-black text-primary leading-none">
-                    25
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-outline uppercase tracking-wider">
-                      Hôm nay
-                    </span>
-                    <span className="text-label-sm font-bold text-on-surface">
-                      THÁNG 7 2026
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-headline-md text-error font-bold">
-                    239.000 đ
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-base">
-                {/* Transaction Item 1 */}
-                <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group">
-                  <div className="flex items-center gap-md">
-                    <div className="w-12 h-12 rounded-full bg-[#FFD54F] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-                      <span
-                        className="material-symbols-outlined text-2xl"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_bag
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-label-md text-on-surface">
-                        ShopeeVip
-                      </h4>
-                      <p className="text-xs text-outline flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>{" "}
-                        Thẻ
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-label-md text-error font-bold">
-                      29.000 đ
-                    </span>
-                  </div>
-                </div>
-                {/* Transaction Item 2 */}
-                <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group">
-                  <div className="flex items-center gap-md">
-                    <div className="w-12 h-12 rounded-full bg-[#42A5F5] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-                      <span
-                        className="material-symbols-outlined text-2xl"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-label-md text-on-surface">
-                        Bách hóa
-                      </h4>
-                      <p className="text-xs text-outline flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>{" "}
-                        Thẻ
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-label-md text-error font-bold">
-                      210.000 đ
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Date Group: 24 THÁNG 7 */}
-            <div className="space-y-md">
-              <div className="flex justify-between items-center pb-sm border-b border-outline-variant/30 px-2 opacity-80">
-                <div className="flex items-center gap-4">
-                  <span className="text-[40px] font-black text-outline-variant leading-none">
-                    24
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-outline uppercase tracking-wider">
-                      Hôm qua
-                    </span>
-                    <span className="text-label-sm font-bold text-on-surface">
-                      THÁNG 7 2026
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-headline-md text-error font-bold">
-                    80.000 đ
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-base">
-                <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group">
-                  <div className="flex items-center gap-md">
-                    <div className="w-12 h-12 rounded-full bg-[#42A5F5] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-                      <span
-                        className="material-symbols-outlined text-2xl"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-label-md text-on-surface">
-                        Bách hóa
-                      </h4>
-                      <p className="text-xs text-outline flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>{" "}
-                        Thẻ
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-label-md text-error font-bold">
-                      80.000 đ
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Date Group: 23 THÁNG 7 */}
-            <div className="space-y-md">
-              <div className="flex justify-between items-center pb-sm border-b border-outline-variant/30 px-2 opacity-80">
-                <div className="flex items-center gap-4">
-                  <span className="text-[40px] font-black text-outline-variant leading-none">
-                    23
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-outline uppercase tracking-wider">
-                      Thứ Năm
-                    </span>
-                    <span className="text-label-sm font-bold text-on-surface">
-                      THÁNG 7 2026
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-headline-md text-error font-bold">
-                    493.000 đ
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-base">
-                <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group">
-                  <div className="flex items-center gap-md">
-                    <div className="w-12 h-12 rounded-full bg-[#42A5F5] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-                      <span
-                        className="material-symbols-outlined text-2xl"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-label-md text-on-surface">
-                        Bách hóa
-                      </h4>
-                      <p className="text-xs text-outline flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>{" "}
-                        Thẻ
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-label-md text-error font-bold">
-                      28.000 đ
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group">
-                  <div className="flex items-center gap-md">
-                    <div className="w-12 h-12 rounded-full bg-[#EF5350] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-                      <span
-                        className="material-symbols-outlined text-2xl"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        home
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-label-md text-on-surface">
-                        Tiền phòng
-                      </h4>
-                      <p className="text-xs text-outline flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">
-                          account_balance
-                        </span>{" "}
-                        Tiền mặt
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-label-md text-error font-bold">
-                      450.000 đ
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group">
-                  <div className="flex items-center gap-md">
-                    <div className="w-12 h-12 rounded-full bg-[#42A5F5] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-                      <span
-                        className="material-symbols-outlined text-2xl"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-label-md text-on-surface">
-                        Bách hóa
-                      </h4>
-                      <p className="text-xs text-outline flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">
-                          credit_card
-                        </span>{" "}
-                        Thẻ
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-label-md text-error font-bold">
-                      15.000 đ
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Date Group: 22 THÁNG 7 */}
-            <div className="space-y-md">
-              <div className="flex justify-between items-center pb-sm border-b border-outline-variant/30 px-2 opacity-80">
-                <div className="flex items-center gap-4">
-                  <span className="text-[40px] font-black text-outline-variant leading-none">
-                    22
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-outline uppercase tracking-wider">
-                      Thứ Tư
-                    </span>
-                    <span className="text-label-sm font-bold text-on-surface">
-                      THÁNG 7 2026
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-headline-md text-tertiary font-bold">
-                    47.000 đ
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-base">
-                <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl transition-all group">
-                  <div className="flex items-center gap-md">
-                    <div className="w-12 h-12 rounded-full bg-tertiary flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-                      <span
-                        className="material-symbols-outlined text-2xl"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        payments
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-label-md text-on-surface">
-                        Thu nhập thêm
-                      </h4>
-                      <p className="text-xs text-outline flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">
-                          account_balance
-                        </span>{" "}
-                        Chuyển khoản
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-label-md text-tertiary font-bold">
-                      +47.000 đ
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {dayGroups.length === 0 ? (
+              <p className="text-center text-on-surface-variant py-xl">
+                Không có giao dịch nào trong khoảng thời gian này.
+              </p>
+            ) : (
+              dayGroups.map((group) => (
+                <DayGroup group={group} key={group.dateIso} />
+              ))
+            )}
           </section>
         </div>
         {/* Floating Action Button */}
@@ -350,6 +109,9 @@ export function TransactionsContent({ userName }: TransactionsContentProps) {
         </div>
       </main>
       <AddTransactionModal
+        accounts={accounts}
+        expenseCategories={expenseCategories}
+        incomeCategories={incomeCategories}
         onClose={() => setIsAddModalOpen(false)}
         open={isAddModalOpen}
       />

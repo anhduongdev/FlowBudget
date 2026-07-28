@@ -1,8 +1,32 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { DayGroup } from "@/app/_components/transaction-day-group";
+import { SetBudgetButton } from "@/app/categories/set-budget-button";
+import { formatDateIso, getCurrentMonthRange } from "@/lib/date-range";
+import { getDayGroupLabel } from "@/lib/day-label";
+import { formatVnd } from "@/lib/format";
+import {
+  listActiveAccountsForUser,
+  sumAccountBalances,
+} from "@/lib/services/account-service";
 import { getCurrentUser } from "@/lib/services/auth-service";
+import {
+  buildMonthlyBudgetSummary,
+  getBudgetAmountForMonth,
+} from "@/lib/services/budget-service";
+import {
+  getTopSpendingCategories,
+  listCategoriesForSelect,
+} from "@/lib/services/category-service";
+import {
+  getMonthlyExpenseTotal,
+  getMonthlyIncomeTotal,
+  getRecentTransactionsForUser,
+} from "@/lib/services/transaction-service";
 import { AppHeader } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
+import { QuickAddTransactionButton } from "./quick-add-transaction-button";
 
 export const metadata: Metadata = {
   title: "FlowBudget - Tổng quan",
@@ -11,11 +35,58 @@ export const metadata: Metadata = {
 const GLASS_CARD =
   "bg-white border border-slate-200/80 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)]";
 
+const RECENT_TRANSACTIONS_LIMIT = 5;
+const TOP_CATEGORIES_LIMIT = 6;
+const MAX_ACCOUNTS_SHOWN = 4;
+const RING_RADIUS = 50;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");
   }
+
+  const monthRange = getCurrentMonthRange();
+
+  const [
+    accounts,
+    monthlyExpenseTotal,
+    monthlyIncomeTotal,
+    budgetAmount,
+    recentGroups,
+    topExpenseCategories,
+    expenseCategories,
+    incomeCategories,
+  ] = await Promise.all([
+    listActiveAccountsForUser(user.id),
+    getMonthlyExpenseTotal(user.id, monthRange),
+    getMonthlyIncomeTotal(user.id, monthRange),
+    getBudgetAmountForMonth(user.id, monthRange),
+    getRecentTransactionsForUser(user.id, RECENT_TRANSACTIONS_LIMIT),
+    getTopSpendingCategories(
+      user.id,
+      "expense",
+      monthRange,
+      TOP_CATEGORIES_LIMIT,
+    ),
+    listCategoriesForSelect(user.id, "expense"),
+    listCategoriesForSelect(user.id, "income"),
+  ]);
+
+  const budgetSummary = buildMonthlyBudgetSummary(
+    budgetAmount,
+    monthlyExpenseTotal,
+  );
+  const totalBalance = sumAccountBalances(accounts);
+  const monthlySavings = monthlyIncomeTotal - monthlyExpenseTotal;
+  const todayIso = formatDateIso(new Date());
+  const recentGroupsView = recentGroups.map((group) => ({
+    ...group,
+    label: getDayGroupLabel(group.dateIso, todayIso),
+  }));
+  const ringOffset =
+    RING_CIRCUMFERENCE * (1 - budgetSummary.spentPercent / 100);
 
   return (
     <>
@@ -24,12 +95,11 @@ export default async function DashboardPage() {
       <main className="ml-72 min-h-screen">
         <AppHeader
           primaryAction={
-            <button className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all">
-              <span className="material-symbols-outlined text-[18px]">
-                add
-              </span>
-              Giao dịch mới
-            </button>
+            <QuickAddTransactionButton
+              accounts={accounts}
+              expenseCategories={expenseCategories}
+              incomeCategories={incomeCategories}
+            />
           }
           title="Tổng quan"
         />
@@ -48,7 +118,9 @@ export default async function DashboardPage() {
                     account_balance_wallet
                   </span>
                 </div>
-                <h2 className="text-4xl font-bold mt-2">9.166.000 ₫</h2>
+                <h2 className="text-4xl font-bold mt-2">
+                  {formatVnd(totalBalance)}
+                </h2>
               </div>
               <div className="relative z-10 grid grid-cols-2 gap-4 mt-6">
                 <div>
@@ -56,7 +128,7 @@ export default async function DashboardPage() {
                     Thu nhập tháng
                   </p>
                   <p className="text-lg font-semibold text-green-300">
-                    +12.450.000
+                    +{formatVnd(monthlyIncomeTotal)}
                   </p>
                 </div>
                 <div>
@@ -64,7 +136,7 @@ export default async function DashboardPage() {
                     Chi tiêu tháng
                   </p>
                   <p className="text-lg font-semibold text-red-300">
-                    -8.505.000
+                    -{formatVnd(monthlyExpenseTotal)}
                   </p>
                 </div>
               </div>
@@ -82,28 +154,34 @@ export default async function DashboardPage() {
                     cx="56"
                     cy="56"
                     fill="transparent"
-                    r="50"
+                    r={RING_RADIUS}
                     stroke="currentColor"
                     strokeWidth="10"
                   ></circle>
-                  <circle
-                    className="text-primary"
-                    cx="56"
-                    cy="56"
-                    fill="transparent"
-                    r="50"
-                    stroke="currentColor"
-                    strokeDasharray="314.15"
-                    strokeDashoffset="78.5"
-                    strokeWidth="10"
-                  ></circle>
+                  {budgetSummary.hasBudget && (
+                    <circle
+                      className={
+                        budgetSummary.isOverBudget
+                          ? "text-error"
+                          : "text-primary"
+                      }
+                      cx="56"
+                      cy="56"
+                      fill="transparent"
+                      r={RING_RADIUS}
+                      stroke="currentColor"
+                      strokeDasharray={RING_CIRCUMFERENCE}
+                      strokeDashoffset={ringOffset}
+                      strokeWidth="10"
+                    ></circle>
+                  )}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <p className="text-xs text-slate-400 font-medium">
                     Chi phí
                   </p>
                   <p className="text-sm font-bold text-slate-800">
-                    8.505.000 ₫
+                    {formatVnd(monthlyExpenseTotal)}
                   </p>
                 </div>
               </div>
@@ -111,351 +189,156 @@ export default async function DashboardPage() {
                 <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">
                   Tiết kiệm tháng này
                 </p>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-lg font-bold text-primary">
-                    3.945.000 ₫
-                  </span>
-                  <span className="text-[10px] text-green-600 font-bold">
-                    +12%
-                  </span>
-                </div>
+                <span
+                  className={`text-lg font-bold ${
+                    monthlySavings >= 0 ? "text-primary" : "text-error"
+                  }`}
+                >
+                  {formatVnd(Math.abs(monthlySavings))}
+                </span>
+              </div>
+              <div className="mt-3">
+                <SetBudgetButton
+                  currentAmount={
+                    budgetSummary.hasBudget ? budgetSummary.budgetAmount : null
+                  }
+                />
               </div>
             </div>
           </div>
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            {/* Left: Recent Transactions (Timeline style) */}
+            {/* Left: Recent Transactions */}
             <div className="xl:col-span-7 space-y-6">
               <div className={`${GLASS_CARD} rounded-2xl overflow-hidden`}>
                 <div className="p-6 border-b border-slate-200/30 flex justify-between items-center">
                   <h3 className="font-bold text-slate-800">
-                    5 giao dịch gần nhất
+                    {RECENT_TRANSACTIONS_LIMIT} giao dịch gần nhất
                   </h3>
-                  <a
+                  <Link
                     className="text-xs font-bold text-primary hover:underline"
-                    href="#"
+                    href="/transactions"
                   >
                     Xem tất cả
-                  </a>
+                  </Link>
                 </div>
-                <div className="p-0">
-                  {/* Timeline Group: Today */}
-                  <div className="p-4 bg-slate-50/50 flex items-center gap-4">
-                    <div className="text-center w-12">
-                      <p className="text-2xl font-bold text-slate-400 leading-none">
-                        25
-                      </p>
-                      <p className="text-[8px] font-bold text-slate-400 uppercase">
-                        Tháng 7
-                      </p>
-                    </div>
-                    <div className="h-4 w-[1px] bg-slate-200"></div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      Hôm nay
-                    </div>
+                {recentGroupsView.length === 0 ? (
+                  <p className="p-6 text-center text-sm text-slate-400">
+                    Chưa có giao dịch nào.
+                  </p>
+                ) : (
+                  <div className="p-4 space-y-4">
+                    {recentGroupsView.map((group) => (
+                      <DayGroup group={group} key={group.dateIso} />
+                    ))}
                   </div>
-                  <div className="divide-y divide-slate-100 px-6">
-                    <div className="py-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-full icon-orange flex items-center justify-center">
-                          <span className="material-symbols-outlined">
-                            shopping_bag
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">
-                            ShopeeVip
-                          </p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span className="material-symbols-outlined text-[14px] text-slate-400">
-                              credit_card
-                            </span>
-                            <span className="text-[11px] text-slate-400">
-                              Thẻ
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm font-bold text-pink-500">
-                        29.000 ₫
-                      </p>
-                    </div>
-                    <div className="py-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-full icon-blue flex items-center justify-center">
-                          <span className="material-symbols-outlined">
-                            local_grocery_store
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">
-                            Bách hóa
-                          </p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span className="material-symbols-outlined text-[14px] text-slate-400">
-                              credit_card
-                            </span>
-                            <span className="text-[11px] text-slate-400">
-                              Thẻ
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm font-bold text-pink-500">
-                        210.000 ₫
-                      </p>
-                    </div>
-                  </div>
-                  {/* Timeline Group: Yesterday */}
-                  <div className="p-4 bg-slate-50/50 flex items-center gap-4 border-t border-slate-100">
-                    <div className="text-center w-12">
-                      <p className="text-2xl font-bold text-slate-400 leading-none">
-                        24
-                      </p>
-                      <p className="text-[8px] font-bold text-slate-400 uppercase">
-                        Tháng 7
-                      </p>
-                    </div>
-                    <div className="h-4 w-[1px] bg-slate-200"></div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      Hôm qua
-                    </div>
-                  </div>
-                  <div className="divide-y divide-slate-100 px-6">
-                    <div className="py-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-full icon-blue flex items-center justify-center">
-                          <span className="material-symbols-outlined">
-                            local_grocery_store
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">
-                            Bách hóa
-                          </p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span className="material-symbols-outlined text-[14px] text-slate-400">
-                              credit_card
-                            </span>
-                            <span className="text-[11px] text-slate-400">
-                              Thẻ
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm font-bold text-pink-500">
-                        80.000 ₫
-                      </p>
-                    </div>
-                  </div>
-                  {/* Timeline Group: Day Before */}
-                  <div className="p-4 bg-slate-50/50 flex items-center gap-4 border-t border-slate-100">
-                    <div className="text-center w-12">
-                      <p className="text-2xl font-bold text-slate-400 leading-none">
-                        23
-                      </p>
-                      <p className="text-[8px] font-bold text-slate-400 uppercase">
-                        Tháng 7
-                      </p>
-                    </div>
-                    <div className="h-4 w-[1px] bg-slate-200"></div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      Thứ Năm
-                    </div>
-                  </div>
-                  <div className="divide-y divide-slate-100 px-6 mb-2">
-                    <div className="py-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-full icon-blue flex items-center justify-center">
-                          <span className="material-symbols-outlined">
-                            local_grocery_store
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">
-                            Bách hóa
-                          </p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span className="material-symbols-outlined text-[14px] text-slate-400">
-                              credit_card
-                            </span>
-                            <span className="text-[11px] text-slate-400">
-                              Thẻ
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm font-bold text-pink-500">
-                        28.000 ₫
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
             {/* Right: Categories & Accounts */}
             <div className="xl:col-span-5 space-y-6">
-              {/* Categories Grid (Based on IMAGE_14) */}
+              {/* Categories Grid */}
               <div className={`${GLASS_CARD} rounded-2xl p-6`}>
                 <h3 className="font-bold text-slate-800 mb-6">
                   Chi tiêu theo mục
                 </h3>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full icon-blue flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[24px]">
-                        shopping_basket
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500">
-                        Bách hóa
-                      </p>
-                      <p className="text-sm font-bold text-primary">
-                        4.945.000 ₫
-                      </p>
-                    </div>
+                {topExpenseCategories.length === 0 ? (
+                  <p className="text-sm text-slate-400">
+                    Chưa có danh mục chi tiêu nào.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                    {topExpenseCategories.map((category) => (
+                      <div className="flex items-center gap-3" key={category.id}>
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: category.color }}
+                        >
+                          <span className="material-symbols-outlined text-[24px] text-white">
+                            {category.icon}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-medium text-slate-500">
+                            {category.name}
+                          </p>
+                          <p
+                            className="text-sm font-bold"
+                            style={{ color: category.color }}
+                          >
+                            {formatVnd(category.totalAmount)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full icon-purple flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[24px]">
-                        restaurant
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500">
-                        Nhà hàng
-                      </p>
-                      <p className="text-sm font-bold text-slate-400">
-                        0 ₫
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full icon-pink flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[24px]">
-                        confirmation_number
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500">
-                        Giải trí
-                      </p>
-                      <p className="text-sm font-bold text-slate-400">
-                        0 ₫
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full icon-orange flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[24px]">
-                        directions_bus
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500">
-                        Vận chuyển
-                      </p>
-                      <p className="text-sm font-bold text-slate-400">
-                        0 ₫
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full icon-red flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[24px]">
-                        home
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500">
-                        Phòng trọ
-                      </p>
-                      <p className="text-sm font-bold text-pink-500">
-                        1.700.000 ₫
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full icon-red flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[24px]">
-                        bolt
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500">
-                        Điện, nước
-                      </p>
-                      <p className="text-sm font-bold text-pink-500">
-                        520.000 ₫
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <button className="w-full mt-6 py-2 border-t border-slate-100 flex items-center justify-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-primary transition-colors">
+                )}
+                <Link
+                  className="w-full mt-6 py-2 border-t border-slate-100 flex items-center justify-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
+                  href="/categories"
+                >
                   Xem thêm
                   <span className="material-symbols-outlined text-[16px]">
                     expand_more
                   </span>
-                </button>
+                </Link>
               </div>
-              {/* Accounts Card (Based on IMAGE_13) */}
+              {/* Accounts Card */}
               <div className={`${GLASS_CARD} rounded-2xl p-6`}>
                 <h3 className="font-bold text-slate-800 mb-6">
                   Tài khoản của tôi
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white relative">
-                        <span className="material-symbols-outlined">
-                          credit_card
-                        </span>
-                        <div className="absolute -bottom-1 -right-1 bg-amber-400 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-                          <span
-                            className="material-symbols-outlined text-[10px] text-white"
-                            style={{ fontVariationSettings: "'FILL' 1" }}
+                {accounts.length === 0 ? (
+                  <p className="text-sm text-slate-400">
+                    Chưa có tài khoản nào.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {accounts.slice(0, MAX_ACCOUNTS_SHOWN).map((account, index) => (
+                      <div
+                        className="flex items-center justify-between"
+                        key={account.id}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="w-12 h-12 rounded-lg flex items-center justify-center text-white relative"
+                            style={{ backgroundColor: account.color }}
                           >
-                            star
-                          </span>
+                            <span className="material-symbols-outlined">
+                              {account.icon}
+                            </span>
+                            {index === 0 && (
+                              <div className="absolute -bottom-1 -right-1 bg-amber-400 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                                <span
+                                  className="material-symbols-outlined text-[10px] text-white"
+                                  style={{ fontVariationSettings: "'FILL' 1" }}
+                                >
+                                  star
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">
+                              {account.name}
+                            </p>
+                            <p className="text-xs text-cyan-600 font-bold">
+                              {formatVnd(account.currentBalance)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">
-                          Thẻ
-                        </p>
-                        <p className="text-xs text-cyan-600 font-bold">
-                          9.166.000 ₫
-                        </p>
-                      </div>
-                    </div>
-                    <span className="material-symbols-outlined text-slate-300">
-                      chevron_right
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-teal-500 flex items-center justify-center text-white">
-                        <span className="material-symbols-outlined">
-                          account_balance_wallet
+                        <span className="material-symbols-outlined text-slate-300">
+                          chevron_right
                         </span>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">
-                          Tiền mặt
-                        </p>
-                        <p className="text-xs text-slate-400 font-bold">
-                          0 ₫
-                        </p>
-                      </div>
-                    </div>
-                    <span className="material-symbols-outlined text-slate-300">
-                      chevron_right
-                    </span>
+                    ))}
                   </div>
-                </div>
-                <button className="w-full mt-6 py-2 bg-slate-50 rounded-lg text-xs font-bold text-primary hover:bg-slate-100 transition-colors">
-                  Thêm tài khoản
-                </button>
+                )}
+                <Link
+                  className="block w-full mt-6 py-2 bg-slate-50 rounded-lg text-xs font-bold text-primary hover:bg-slate-100 transition-colors text-center"
+                  href="/accounts"
+                >
+                  Quản lý tài khoản
+                </Link>
               </div>
             </div>
           </div>

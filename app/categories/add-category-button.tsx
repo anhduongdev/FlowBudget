@@ -1,7 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { createPortal } from "react-dom";
+import { useActionState, useState } from "react";
+import { createPortal, useFormStatus } from "react-dom";
+import {
+  createCategoryAction,
+  type CategoryFormState,
+} from "@/lib/actions/category-actions";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/category-options";
 
 const TYPES = [
@@ -11,20 +15,45 @@ const TYPES = [
 
 type CategoryType = (typeof TYPES)[number]["value"];
 
+const initialState: CategoryFormState = {};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      className="flex-1 py-3 rounded-xl bg-primary text-white font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-70"
+      disabled={pending}
+      type="submit"
+    >
+      {pending ? (
+        <span className="material-symbols-outlined animate-spin align-middle">
+          progress_activity
+        </span>
+      ) : (
+        "Lưu danh mục"
+      )}
+    </button>
+  );
+}
+
 export function AddCategoryButton() {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<CategoryType>("expense");
   const [name, setName] = useState("");
   const [icon, setIcon] = useState<string>(CATEGORY_ICONS[0]);
   const [color, setColor] = useState<string>(CATEGORY_COLORS[0]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [state, formAction] = useActionState(
+    createCategoryAction,
+    initialState,
+  );
+  const [handledState, setHandledState] = useState(state);
 
   function resetForm() {
     setType("expense");
     setName("");
     setIcon(CATEGORY_ICONS[0]);
     setColor(CATEGORY_COLORS[0]);
-    setErrors({});
   }
 
   function handleClose() {
@@ -32,21 +61,11 @@ export function AddCategoryButton() {
     setOpen(false);
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const nextErrors: Record<string, string> = {};
-    if (!name.trim()) {
-      nextErrors.name = "Vui lòng nhập tên danh mục";
+  if (state !== handledState) {
+    setHandledState(state);
+    if (state.success) {
+      handleClose();
     }
-
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      return;
-    }
-
-    // Chỉ xử lý phần giao diện — chưa lưu vào cơ sở dữ liệu.
-    handleClose();
   }
 
   return (
@@ -83,7 +102,18 @@ export function AddCategoryButton() {
               </button>
             </div>
 
-            <form className="p-6 space-y-5" onSubmit={handleSubmit}>
+            <form action={formAction} className="p-6 space-y-5">
+              <input name="type" type="hidden" value={type} />
+              <input name="icon" type="hidden" value={icon} />
+              <input name="color" type="hidden" value={color} />
+              {state.message && (
+                <p
+                  aria-live="polite"
+                  className="font-label-md text-label-md text-error text-center"
+                >
+                  {state.message}
+                </p>
+              )}
               {/* Preview */}
               <div className="flex flex-col items-center gap-2">
                 <div
@@ -129,14 +159,16 @@ export function AddCategoryButton() {
                   className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 font-body-md text-body-md outline-none focus:border-primary transition-colors"
                   id="category-name"
                   maxLength={100}
+                  name="name"
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ví dụ: Ăn uống"
+                  required
                   type="text"
                   value={name}
                 />
-                {errors.name && (
+                {state.errors?.name && (
                   <p className="font-label-sm text-label-sm text-error">
-                    {errors.name}
+                    {state.errors.name[0]}
                   </p>
                 )}
               </div>
@@ -197,12 +229,7 @@ export function AddCategoryButton() {
                 >
                   Hủy
                 </button>
-                <button
-                  className="flex-1 py-3 rounded-xl bg-primary text-white font-label-md text-label-md hover:opacity-90 transition-all"
-                  type="submit"
-                >
-                  Lưu danh mục
-                </button>
+                <SubmitButton />
               </div>
             </form>
           </div>
