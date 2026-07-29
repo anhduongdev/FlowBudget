@@ -1,4 +1,5 @@
 import type { accounts_type } from "@/app/generated/prisma/enums";
+import { transactions_type } from "@/app/generated/prisma/enums";
 import {
   DEFAULT_ACCOUNT_COLOR,
   DEFAULT_ACCOUNT_ICON,
@@ -11,6 +12,7 @@ import {
   softDeleteAccountForUser,
   updateAccountForUser as updateAccountRepository,
 } from "@/lib/repositories/account-repository";
+import { sumTransactionAmountForUser } from "@/lib/repositories/transaction-repository";
 import type {
   CreateAccountInput,
   UpdateAccountInput,
@@ -44,6 +46,55 @@ export async function listActiveAccountsForUser(
 
 export function sumAccountBalances(accounts: AccountOption[]): number {
   return accounts.reduce((sum, account) => sum + account.currentBalance, 0);
+}
+
+// `current_balance` on every account already reflects every transaction ever
+// recorded for it (past or future-dated), since balances are adjusted the
+// moment a transaction is created regardless of its date. To reconstruct the
+// total balance as it stood at the end of some earlier/future date D, we
+// start from today's total and reverse the effect of everything dated after
+// D. Transfers move money between the user's own accounts, so they net to
+// zero across the total and can be ignored — only income/expense matter.
+const FAR_FUTURE_DATE = new Date(Date.UTC(2100, 0, 1));
+
+export async function getTotalBalancesAsOfDates(
+  userId: bigint,
+  accounts: AccountOption[],
+  datesIso: string[],
+): Promise<Record<string, number>> {
+  const currentTotal = sumAccountBalances(accounts);
+  const uniqueDates = Array.from(new Set(datesIso));
+
+  const entries = await Promise.all(
+    uniqueDates.map(async (dateIso) => {
+      const afterDate = new Date(`${dateIso}T00:00:00.000Z`);
+      afterDate.setUTCDate(afterDate.getUTCDate() + 1);
+
+      const [futureIncome, futureExpense] = await Promise.all([
+        sumTransactionAmountForUser(
+          userId,
+          transactions_type.income,
+          afterDate,
+          FAR_FUTURE_DATE,
+        ),
+        sumTransactionAmountForUser(
+          userId,
+          transactions_type.expense,
+          afterDate,
+          FAR_FUTURE_DATE,
+        ),
+      ]);
+
+      const balanceAsOfDate =
+        currentTotal +
+        decimalToNumber(futureExpense._sum.amount) -
+        decimalToNumber(futureIncome._sum.amount);
+
+      return [dateIso, balanceAsOfDate] as const;
+    }),
+  );
+
+  return Object.fromEntries(entries);
 }
 
 export async function createAccountForUser(

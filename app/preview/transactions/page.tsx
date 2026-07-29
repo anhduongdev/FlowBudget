@@ -7,8 +7,8 @@ import {
 import { formatVnd } from "@/lib/format";
 import { getPeriodRangeLabel } from "@/lib/period-range-label";
 import {
+  getTotalBalancesAsOfDates,
   listActiveAccountsForUser,
-  sumAccountBalances,
 } from "@/lib/services/account-service";
 import { getCurrentUser } from "@/lib/services/auth-service";
 import { getCategoriesWithMonthlySpending } from "@/lib/services/category-service";
@@ -44,21 +44,33 @@ export default async function TransactionsPreviewPage({
   const { from, to } = await searchParams;
   const range = parseDateRangeParams(from, to);
 
-  const [accounts, expenseCategories, incomeCategories, dayGroups] =
-    await Promise.all([
-      listActiveAccountsForUser(user.id),
-      getCategoriesWithMonthlySpending(user.id, "expense", range),
-      getCategoriesWithMonthlySpending(user.id, "income", range),
-      getTransactionsForUser(user.id, range),
-    ]);
-
-  const totalBalance = sumAccountBalances(accounts);
   const todayIso = formatDateIso(new Date());
   const periodLabel = getPeriodRangeLabel(range);
   const inclusiveEnd = new Date(range.end);
   inclusiveEnd.setUTCDate(inclusiveEnd.getUTCDate() - 1);
   const currentFrom = formatDateIso(range.start);
   const currentTo = formatDateIso(inclusiveEnd);
+  const dayBeforeFrom = new Date(range.start);
+  dayBeforeFrom.setUTCDate(dayBeforeFrom.getUTCDate() - 1);
+  const dayBeforeFromIso = formatDateIso(dayBeforeFrom);
+
+  const accounts = await listActiveAccountsForUser(user.id);
+
+  const [expenseCategories, incomeCategories, dayGroups, balancesAsOf] =
+    await Promise.all([
+      getCategoriesWithMonthlySpending(user.id, "expense", range),
+      getCategoriesWithMonthlySpending(user.id, "income", range),
+      getTransactionsForUser(user.id, range),
+      getTotalBalancesAsOfDates(user.id, accounts, [
+        todayIso,
+        dayBeforeFromIso,
+        currentTo,
+      ]),
+    ]);
+
+  const totalBalance = balancesAsOf[todayIso];
+  const openingBalance = balancesAsOf[dayBeforeFromIso];
+  const projectedBalance = balancesAsOf[currentTo];
 
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
@@ -75,7 +87,11 @@ export default async function TransactionsPreviewPage({
               <span className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wide">
                 Tất cả các tài khoản
               </span>
-              <h1 className="text-[20px] font-bold text-[#18448b] tracking-tight leading-tight">
+              <h1
+                className={`text-[20px] font-bold tracking-tight leading-tight ${
+                  totalBalance < 0 ? "text-error" : "text-[#18448b]"
+                }`}
+              >
                 {formatVnd(totalBalance)}
               </h1>
             </div>
@@ -99,15 +115,25 @@ export default async function TransactionsPreviewPage({
             <p className="text-[11px] font-medium text-on-surface-variant mb-1">
               Số dư đầu kỳ
             </p>
-            <p className="text-[15px] font-bold text-[#18448b]/80">
-              17.671.000 đ
+            <p
+              className={`text-[15px] font-bold ${
+                openingBalance < 0 ? "text-error" : "text-[#18448b]/80"
+              }`}
+            >
+              {formatVnd(openingBalance)}
             </p>
           </div>
           <div className="bg-white p-3 rounded-2xl shadow-[0_4px_12px_-2px_rgba(0,0,0,0.05)] border border-[#18448b]/10 flex flex-col justify-between">
             <p className="text-[11px] font-medium text-on-surface-variant mb-1">
               Số dư dự kiến
             </p>
-            <p className="text-[15px] font-bold text-teal-600">4.873.000 đ</p>
+            <p
+              className={`text-[15px] font-bold ${
+                projectedBalance < 0 ? "text-error" : "text-teal-600"
+              }`}
+            >
+              {formatVnd(projectedBalance)}
+            </p>
           </div>
         </div>
 
