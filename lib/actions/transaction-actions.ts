@@ -74,6 +74,7 @@ export async function createTransactionAction(
   revalidatePath("/transactions");
   revalidatePath("/accounts");
   revalidatePath("/dashboard");
+  revalidatePath("/preview/transactions");
   return { success: true };
 }
 
@@ -135,6 +136,7 @@ export async function updateTransactionAction(
   revalidatePath("/transactions");
   revalidatePath("/accounts");
   revalidatePath("/dashboard");
+  revalidatePath("/preview/transactions");
   return { success: true };
 }
 
@@ -166,5 +168,6 @@ export async function deleteTransactionAction(
   revalidatePath("/transactions");
   revalidatePath("/accounts");
   revalidatePath("/dashboard");
+  revalidatePath("/preview/transactions");
   return { success: true };
 }

@@ -53,6 +53,7 @@ export async function createCategoryAction(
 
   revalidatePath("/categories");
   revalidatePath("/budgets");
+  revalidatePath("/preview/transactions");
   return { success: true };
 }
 
@@ -94,6 +95,7 @@ export async function updateCategoryAction(
 
   revalidatePath("/categories");
   revalidatePath("/budgets");
+  revalidatePath("/preview/transactions");
   return { success: true };
 }
 
@@ -122,5 +124,6 @@ export async function deleteCategoryAction(
 
   revalidatePath("/categories");
   revalidatePath("/budgets");
+  revalidatePath("/preview/transactions");
   return { success: true };
 }

@@ -8,6 +8,10 @@ import {
 import { formatVnd } from "@/lib/format";
 import type { AccountOption } from "@/lib/services/account-service";
 import type { CategoryOption } from "@/lib/services/category-service";
+import {
+  getMonthYearLabel,
+  transactionItemTitle,
+} from "@/lib/transaction-display";
 
 export type TransactionType = "income" | "expense" | "transfer";
 
@@ -41,29 +45,8 @@ interface DayGroupProps {
   incomeCategories: CategoryOption[];
 }
 
-const MONTH_YEAR_FORMATTER = new Intl.DateTimeFormat("vi-VN", {
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 function getDayNumber(dateIso: string): number {
   return Number(dateIso.slice(8, 10));
-}
-
-function getMonthYearLabel(dateIso: string): string {
-  const date = new Date(`${dateIso}T00:00:00.000Z`);
-  return MONTH_YEAR_FORMATTER.format(date).toUpperCase();
-}
-
-function transactionItemTitle(item: TransactionListItemView): string {
-  if (item.note) return item.note;
-  if (item.type === "transfer") {
-    return item.toAccountName
-      ? `Chuyển đến ${item.toAccountName}`
-      : "Chuyển khoản";
-  }
-  return item.categoryName ?? "Không có danh mục";
 }
 
 function toEditableTransaction(
