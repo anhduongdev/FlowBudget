@@ -70,7 +70,7 @@ export function RegisterForm() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="w-full h-full object-cover"
-              data-alt="A sophisticated digital interface of a financial dashboard showing colorful charts and spending categories. The aesthetic is modern and premium with soft ambient lighting and a clean glassmorphism style, using deep indigo and vibrant teal accents on a light background. High quality 3D render style."
+              alt=""
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuBw_8iEVeTQ5bNZfYcyRR77MyNal1za1PCkpjUVVI-lGT3lcc46b9cOfQDk8ZXpEoSTd31UXmbPy4gCdii_lYpx73O0pqjRTxOQ8wah50EiJudKRjYYGVI1UjlKjHkcRBofGVREpzl7nVf7a0ecuD9CG3U-s6OM8Y0YtFI_o8uPE-rV7jnTwOd3MMYVedJWHzAfk3a_d5C1kH5H8YJmaqSbCodG_WvmWKFKuscdqQ_gzejSnRazZOrMEiiOyWm5NoVj4LT1bcCafQ"
             />
             <div className="absolute bottom-6 left-6 right-6 z-20">

@@ -2,16 +2,19 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentMonthRange } from "@/lib/date-range";
 import { formatVnd } from "@/lib/format";
+import { listActiveAccountsForUser } from "@/lib/services/account-service";
 import { getCurrentUser } from "@/lib/services/auth-service";
 import {
   buildMonthlyBudgetSummary,
   getBudgetAmountForMonth,
   getCategoryBudgetSummariesForUser,
 } from "@/lib/services/budget-service";
+import { listCategoriesForSelect } from "@/lib/services/category-service";
 import { getMonthlyExpenseTotal } from "@/lib/services/transaction-service";
 import { AppHeader } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
 import { SetBudgetButton } from "../categories/set-budget-button";
+import { QuickAddTransactionButton } from "../dashboard/quick-add-transaction-button";
 
 export const metadata: Metadata = {
   title: "FlowBudget - Ngân sách",
@@ -29,12 +32,21 @@ export default async function BudgetsPage() {
 
   const monthRange = getCurrentMonthRange();
 
-  const [budgetAmount, monthlyExpenseTotal, categorySummaries] =
-    await Promise.all([
-      getBudgetAmountForMonth(user.id, monthRange),
-      getMonthlyExpenseTotal(user.id, monthRange),
-      getCategoryBudgetSummariesForUser(user.id, monthRange),
-    ]);
+  const [
+    budgetAmount,
+    monthlyExpenseTotal,
+    categorySummaries,
+    accounts,
+    expenseCategories,
+    incomeCategories,
+  ] = await Promise.all([
+    getBudgetAmountForMonth(user.id, monthRange),
+    getMonthlyExpenseTotal(user.id, monthRange),
+    getCategoryBudgetSummariesForUser(user.id, monthRange),
+    listActiveAccountsForUser(user.id),
+    listCategoriesForSelect(user.id, "expense"),
+    listCategoriesForSelect(user.id, "income"),
+  ]);
 
   const overallSummary = buildMonthlyBudgetSummary(
     budgetAmount,
@@ -154,6 +166,12 @@ export default async function BudgetsPage() {
           </section>
         </div>
       </main>
+      <QuickAddTransactionButton
+        accounts={accounts}
+        expenseCategories={expenseCategories}
+        incomeCategories={incomeCategories}
+        variant="fab"
+      />
     </>
   );
 }

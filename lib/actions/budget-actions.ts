@@ -40,6 +40,7 @@ export async function setMonthlyBudgetAction(
 
   revalidatePath("/categories");
   revalidatePath("/budgets");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 

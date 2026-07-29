@@ -23,5 +23,5 @@ export const updateCategorySchema = createCategorySchema.omit({
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
 
 export const categoryIdSchema = z.object({
-  id: z.string().min(1, "Thiếu mã danh mục"),
+  id: z.string().min(1, "Thiếu mã danh mục").regex(/^\d+$/, "Mã không hợp lệ"),
 });

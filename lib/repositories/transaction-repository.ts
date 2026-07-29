@@ -136,11 +136,12 @@ export interface AccountBalanceAdjustment {
 
 async function applyBalanceAdjustments(
   tx: Prisma.TransactionClient,
+  userId: bigint,
   adjustments: AccountBalanceAdjustment[],
 ) {
   for (const adjustment of adjustments) {
-    await tx.accounts.update({
-      where: { id: adjustment.accountId },
+    await tx.accounts.updateMany({
+      where: { id: adjustment.accountId, user_id: userId },
       data: {
         current_balance:
           adjustment.operation === "increment"
@@ -170,7 +171,7 @@ export function createTransactionWithBalanceUpdates(
       select: { id: true },
     });
 
-    await applyBalanceAdjustments(tx, adjustments);
+    await applyBalanceAdjustments(tx, input.userId, adjustments);
 
     return transaction;
   });
@@ -194,7 +195,7 @@ export function updateTransactionWithBalanceUpdates(
   newAdjustments: AccountBalanceAdjustment[],
 ) {
   return prisma.$transaction(async (tx) => {
-    await applyBalanceAdjustments(tx, reversalAdjustments);
+    await applyBalanceAdjustments(tx, userId, reversalAdjustments);
 
     const result = await tx.transactions.updateMany({
       where: { id, user_id: userId },
@@ -209,7 +210,7 @@ export function updateTransactionWithBalanceUpdates(
       },
     });
 
-    await applyBalanceAdjustments(tx, newAdjustments);
+    await applyBalanceAdjustments(tx, userId, newAdjustments);
 
     return result;
   });
@@ -225,7 +226,7 @@ export function deleteTransactionWithBalanceUpdates(
       where: { id, user_id: userId },
     });
 
-    await applyBalanceAdjustments(tx, reversalAdjustments);
+    await applyBalanceAdjustments(tx, userId, reversalAdjustments);
 
     return result;
   });

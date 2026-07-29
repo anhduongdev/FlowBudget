@@ -109,7 +109,7 @@ export default async function Home() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   className="w-full h-auto rounded-[16px] shadow-sm"
-                  data-alt="A premium, high-fidelity UI dashboard of a financial management app displayed on a sleek laptop screen. The interface features vibrant indigo charts, clean white cards for transaction history, and a soft-lit background. The aesthetic is modern corporate, focusing on precision and clarity, with soft ambient shadows and an airy, light-mode feel."
+                  alt="Giao diện bảng điều khiển FlowBudget hiển thị biểu đồ chi tiêu và lịch sử giao dịch"
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgGUIEJO-okBo16wirVmCE44T18asSvVt6J8tYTIus0Kw3ZzpbUSUGBLHLtD2O2F56ybR9OFgMXm2_FC9xPhtr9m8-qdPvGpQ_gV4x-7M5YmpnbjQOsH5ElTHT29BaSqwea1nXvMIbe3iCFatjbR0Pe9ExDKVaZSceTfuwxKXgAQ6CkV48jwIsMlHltnBy01sonxNCKnwwhLxlYWj_pV8e2l0oTkChEyiokzDB8tiZfViw_WqhNTj3MgYQCxlDU9YAJO7iURCucw"
                 />
               </div>
@@ -290,7 +290,7 @@ export default async function Home() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       className="w-full h-full object-cover"
-                      data-alt="Portrait of a young professional woman in business casual attire, smiling confidently with a bright, minimalist office background. Soft, natural lighting creates a warm and authentic atmosphere. High-end lifestyle photography style."
+                      alt=""
                       src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0UH-5oolqJa7PNN1ISftH1Hwrg_uS6sQA6x-144-gWASl3hW5Orf9PWsvvFaJzUjvxPzIEkqnnH61-G5rLbztlP4ov4lQgUvKzr9ProSDwpEJCRdb_oEnKHiBOfSrqj7xSCdNDkZlT1r_JSyLoLALMpJd00cgJxOWJRYqMY0UIUk0z3_fuUOpo6v-fbDW6y6LJgZtpm586vBnMHnDxAkq5kjqGNo5dVOfiq5LlBWdn6hETnS5Q91rezX6FYBI8hShLJPQARmT1A"
                     />
                   </div>
@@ -348,7 +348,7 @@ export default async function Home() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       className="w-full h-full object-cover"
-                      data-alt="Close-up portrait of a young male entrepreneur with a clean-cut look and glasses, looking thoughtful and positive in a modern coworking space. The background is slightly blurred with soft bokeh and neutral tones. Professional and focused mood."
+                      alt=""
                       src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW7vg8ChTRU4zSHfAhNyV4J0Dj2E7dhTVbThVxyuSRiHNRPo4f4pYp-RMBZFX1IFlDE40bgV2WUjDJWY8lbmGFI_P6DQ7B3VSby4rdrKEH4PnmFyZAwlVSJGgqpQ9lmVEECUsySMCxit4uDLH3L9sEXBnJEJACuLEP3SUBfWf6vddcbEtecyAEQb1ovkxbo6HbBttipZcr50LmMOyBc4b48gjSztmZits6DT1d-Q_6uYgtEQ5AtpI4ebDIw53sZEy7DMxrsSPl4Q"
                     />
                   </div>
@@ -406,7 +406,7 @@ export default async function Home() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       className="w-full h-full object-cover"
-                      data-alt="Portrait of a mature man in a neat polo shirt, laughing heartily in a garden setting. Bright, sunny afternoon lighting creates a joyful and relaxed mood. High-quality lifestyle portrait."
+                      alt=""
                       src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU33iOlC6mZ8CcPk5MctbczoOQoMWokH7XpmgC3u4ZG228ryA4Ma0w4NpMZ7Zk3BqzL9r-VYZb0ahDak-KT-mdtIdp5ItpxYWkyLEgoNQAkBc3HSASDP_WWPvP2916qb2sydN1JZ6HhzHx8hWACkcV5c50pLvFmDkLFkpzJMpugiwxFEgZ2HUx3YB1UyqmbC6al-yZYjHwzHqEjDmrLS6WblsfIElkZ15nkoOtrd6PsYui2OdxG_8jLr3rVz1rN9mOOGJmlqJ_BA"
                     />
                   </div>

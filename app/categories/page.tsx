@@ -219,9 +219,10 @@ export default async function CategoriesPage() {
                     className="w-full bg-surface-container rounded-t-lg relative"
                     key={WEEKDAY_LABELS[index]}
                     style={{ height: `${percent}%` }}
+                    title={formatVnd(weeklyBreakdown.weekdayTotals[index])}
                   >
                     <div
-                      className={`absolute inset-0 rounded-t-lg transition-all cursor-pointer ${
+                      className={`absolute inset-0 rounded-t-lg transition-all cursor-default ${
                         index === weeklyBreakdown.todayIndex
                           ? "bg-primary hover:bg-primary/90"
                           : "bg-primary/20 hover:bg-primary/30"
@@ -262,7 +263,7 @@ export default async function CategoriesPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     className="w-full h-full object-cover"
-                    data-alt="A clean and modern minimalist abstract digital illustration showing several glass-like credit cards floating in a soft, airy blue and purple gradient space. The lighting is ethereal and high-key, maintaining a premium fintech brand aesthetic. Soft shadows and high-quality 3D render style."
+                    alt=""
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1_-SSgKfsn2NnwvBniSvt0WoVXH0UswfvFruh4tOTJucC76B7Cga4q3nyB32YxZ22kAw5pDQ03pPMR-hwFfcHlCECvxrKHTn5_Aqy1vzO369eoPRgLGKm9j1tP61rMTyv4k0dYZcWYbTLknGG46EkqeSlxFaebuXSBzf6GHwB0rQgQjCapUrwMLaN_5m45sr0qXZKEV9EqrpV-Sk-_gRNS3D6-IPycnh_-pSM-arBKe2lz6QLUv5V3mB-4-7yQ3HNb9NQ2K_9Iw"
                   />
                 </div>

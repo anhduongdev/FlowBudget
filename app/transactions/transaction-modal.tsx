@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ConfirmDeleteButton } from "@/app/_components/confirm-delete-button";
 import {
@@ -181,6 +181,15 @@ export function TransactionModal({
   );
   const [handledDeleteState, setHandledDeleteState] = useState(deleteState);
 
+  useEffect(() => {
+    if (state.success || deleteState.success) {
+      onClose();
+    }
+    // Intentionally react only to state/deleteState transitions, not to
+    // onClose identity (callers pass a fresh closure on every render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, deleteState]);
+
   if (!open) return null;
 
   const availableTypes = TRANSACTION_TYPES.filter(
@@ -220,13 +229,13 @@ export function TransactionModal({
   if (state !== handledState) {
     setHandledState(state);
     if (state.success) {
-      handleClose();
+      resetForm();
     }
   }
   if (deleteState !== handledDeleteState) {
     setHandledDeleteState(deleteState);
     if (deleteState.success) {
-      handleClose();
+      resetForm();
     }
   }
 

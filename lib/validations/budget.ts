@@ -13,7 +13,10 @@ export const setMonthlyBudgetSchema = z.object({
 export type SetMonthlyBudgetInput = z.infer<typeof setMonthlyBudgetSchema>;
 
 export const setCategoryBudgetSchema = z.object({
-  categoryId: z.string().min(1, "Thiếu mã danh mục"),
+  categoryId: z
+    .string()
+    .min(1, "Thiếu mã danh mục")
+    .regex(/^\d+$/, "Mã không hợp lệ"),
   amount: budgetAmountField,
 });
 

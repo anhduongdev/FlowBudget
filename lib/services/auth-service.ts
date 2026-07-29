@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { Prisma } from "@/app/generated/prisma/client";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import {
   createSession,
@@ -25,11 +26,22 @@ export async function registerUser(input: RegisterInput) {
   }
 
   const passwordHash = await hashPassword(input.password);
-  const user = await createUser({
-    name: input.name,
-    email: input.email,
-    passwordHash,
-  });
+  let user;
+  try {
+    user = await createUser({
+      name: input.name,
+      email: input.email,
+      passwordHash,
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new EmailAlreadyRegisteredError("Email này đã được đăng ký.");
+    }
+    throw error;
+  }
 
   await createSession(user.id.toString());
   return user;

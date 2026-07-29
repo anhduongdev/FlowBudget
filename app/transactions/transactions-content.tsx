@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   DayGroup,
   type TransactionDayGroupView,
@@ -9,7 +8,7 @@ import type { AccountOption } from "@/lib/services/account-service";
 import type { CategoryOption } from "@/lib/services/category-service";
 import { AppHeader, type PeriodLink } from "../_components/app-header";
 import { Sidebar } from "../_components/sidebar";
-import { TransactionModal } from "./transaction-modal";
+import { QuickAddTransactionButton } from "../dashboard/quick-add-transaction-button";
 
 interface TransactionsContentProps {
   userName: string;
@@ -32,8 +31,6 @@ export function TransactionsContent({
   filterTo,
   periodLinks,
 }: TransactionsContentProps) {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
   return (
     <>
       <Sidebar userName={userName} />
@@ -42,16 +39,12 @@ export function TransactionsContent({
         <AppHeader
           periodLinks={periodLinks}
           primaryAction={
-            <button
-              className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all"
-              onClick={() => setIsAddModalOpen(true)}
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                add
-              </span>
-              Giao dịch mới
-            </button>
+            <QuickAddTransactionButton
+              accounts={accounts}
+              expenseCategories={expenseCategories}
+              incomeCategories={incomeCategories}
+              variant="default"
+            />
           }
           title="Giao dịch"
         />
@@ -104,26 +97,13 @@ export function TransactionsContent({
             )}
           </section>
         </div>
-        {/* Floating Action Button */}
-        <div className="fixed bottom-8 right-8 z-50">
-          <button
-            className="w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
-            onClick={() => setIsAddModalOpen(true)}
-            type="button"
-          >
-            <span className="material-symbols-outlined text-3xl group-hover:rotate-90 transition-transform duration-300">
-              add
-            </span>
-          </button>
-        </div>
+        <QuickAddTransactionButton
+          accounts={accounts}
+          expenseCategories={expenseCategories}
+          incomeCategories={incomeCategories}
+          variant="fab"
+        />
       </main>
-      <TransactionModal
-        accounts={accounts}
-        expenseCategories={expenseCategories}
-        incomeCategories={incomeCategories}
-        onClose={() => setIsAddModalOpen(false)}
-        open={isAddModalOpen}
-      />
     </>
   );
 }

@@ -52,6 +52,7 @@ export async function createCategoryAction(
   }
 
   revalidatePath("/categories");
+  revalidatePath("/budgets");
   return { success: true };
 }
 

@@ -28,5 +28,5 @@ export const updateAccountSchema = createAccountSchema.omit({
 export type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
 
 export const accountIdSchema = z.object({
-  id: z.string().min(1, "Thiếu mã tài khoản"),
+  id: z.string().min(1, "Thiếu mã tài khoản").regex(/^\d+$/, "Mã không hợp lệ"),
 });

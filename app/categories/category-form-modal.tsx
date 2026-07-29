@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { createPortal, useFormStatus } from "react-dom";
 import { ConfirmDeleteButton } from "@/app/_components/confirm-delete-button";
 import {
@@ -91,15 +91,24 @@ export function CategoryFormModal({
   if (state !== handledState) {
     setHandledState(state);
     if (state.success) {
-      handleClose();
+      resetForm();
     }
   }
   if (deleteState !== handledDeleteState) {
     setHandledDeleteState(deleteState);
     if (deleteState.success) {
-      handleClose();
+      resetForm();
     }
   }
+
+  useEffect(() => {
+    if (state.success || deleteState.success) {
+      onClose();
+    }
+    // Intentionally react only to state/deleteState transitions, not to
+    // onClose identity (callers pass a fresh closure on every render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, deleteState]);
 
   if (!open) return null;
 

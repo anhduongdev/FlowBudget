@@ -88,6 +88,9 @@ export function UpdateProfileForm({ name, email }: UpdateProfileFormProps) {
           type="email"
           value={email}
         />
+        <p className="font-label-sm text-label-sm text-on-surface-variant">
+          Email không thể thay đổi.
+        </p>
       </div>
       <SubmitButton />
     </form>
