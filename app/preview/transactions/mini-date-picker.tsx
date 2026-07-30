@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getMondayFirstWeekdayIndex } from "@/lib/date-range";
+import { formatDateVnLong } from "@/lib/format";
 
 interface MiniDatePickerProps {
   value: string;
@@ -42,15 +43,6 @@ function toIso(year: number, month: number, day: number): string {
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-function formatLongVn(iso: string): string {
-  const date = new Date(`${iso}T00:00:00`);
-  return date.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 }
 
 export function MiniDatePicker({
@@ -132,7 +124,7 @@ export function MiniDatePicker({
         )}
         {confirmMode && (
           <p className="text-[20px] font-bold text-on-surface mb-4">
-            {formatLongVn(pending)}
+            {formatDateVnLong(pending)}
           </p>
         )}
 

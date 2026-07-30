@@ -1,14 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { formatVnd } from "@/lib/format";
+import { formatDateVnLong, formatVnd } from "@/lib/format";
 import type { AccountOption } from "@/lib/services/account-service";
 import type { CategorySpendingItem } from "@/lib/services/category-service";
 import { AmountEntryPanel } from "./amount-entry-panel";
 import { CategoryFormPanel } from "./category-form-panel";
+import { TransactionToast } from "./transaction-toast";
 
 interface AddTransactionFlowProps {
   accounts: AccountOption[];
+  currentFrom: string;
+  currentTo: string;
   expenseCategories: CategorySpendingItem[];
   incomeCategories: CategorySpendingItem[];
 }
@@ -17,6 +21,7 @@ type FlowType = "expense" | "income" | "transfer";
 
 type Step =
   | { name: "closed" }
+  | { name: "no-account" }
   | { name: "categories" }
   | { name: "category-form"; category: CategorySpendingItem | null }
   | { name: "amount" };
@@ -29,6 +34,8 @@ const TABS: { value: FlowType; label: string; icon: string }[] = [
 
 export function AddTransactionFlow({
   accounts,
+  currentFrom,
+  currentTo,
   expenseCategories,
   incomeCategories,
 }: AddTransactionFlowProps) {
@@ -40,12 +47,18 @@ export function AddTransactionFlow({
   );
   const [selectedCategory, setSelectedCategory] =
     useState<CategorySpendingItem | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const categories = activeType === "income" ? incomeCategories : expenseCategories;
+  const categories =
+    activeType === "income" ? incomeCategories : expenseCategories;
   const account = accounts.find((item) => item.id === accountId);
   const toAccount = accounts.find((item) => item.id === toAccountId);
 
   function openFlow() {
+    if (accounts.length === 0) {
+      setStep({ name: "no-account" });
+      return;
+    }
     setActiveType("expense");
     setAccountId(accounts[0]?.id ?? "");
     setStep({ name: "categories" });
@@ -60,6 +73,17 @@ export function AddTransactionFlow({
     setStep({ name: "amount" });
   }
 
+  function handleTransactionSaved(transactionDate: string) {
+    closeFlow();
+    const isOutsideCurrentPeriod =
+      transactionDate < currentFrom || transactionDate > currentTo;
+    if (isOutsideCurrentPeriod) {
+      setToastMessage(
+        `Đã lưu giao dịch ngày ${formatDateVnLong(transactionDate)}. Giao dịch nằm ngoài kỳ đang xem.`,
+      );
+    }
+  }
+
   return (
     <>
       <button
@@ -69,6 +93,44 @@ export function AddTransactionFlow({
       >
         <span className="material-symbols-outlined text-[36px]">add</span>
       </button>
+
+      {step.name !== "closed" && (
+        <button
+          aria-label="Đóng"
+          className="fixed inset-0 z-[65] bg-black/40"
+          onClick={closeFlow}
+          type="button"
+        />
+      )}
+
+      {step.name === "no-account" && (
+        <div className="fixed top-[192px] bottom-0 w-full max-w-[430px] z-[70] bg-background text-on-surface flex flex-col items-center justify-center gap-3 rounded-t-3xl overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.12)] px-8 text-center">
+          <button
+            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center"
+            onClick={closeFlow}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-on-surface-variant text-lg">
+              close
+            </span>
+          </button>
+          <span className="material-symbols-outlined text-[#18448b] text-4xl">
+            account_balance_wallet
+          </span>
+          <p className="text-[15px] font-semibold text-on-surface">
+            Bạn chưa có tài khoản nào
+          </p>
+          <p className="text-[13px] text-on-surface-variant">
+            Tạo một tài khoản (tiền mặt, thẻ, ví...) trước khi thêm giao dịch.
+          </p>
+          <Link
+            className="px-5 py-2.5 rounded-xl bg-[#18448b] text-white text-[13px] font-semibold"
+            href="/accounts"
+          >
+            Tạo tài khoản
+          </Link>
+        </div>
+      )}
 
       {step.name === "categories" && (
         <div className="fixed top-[192px] bottom-0 w-full max-w-[430px] z-[70] bg-background text-on-surface flex flex-col rounded-t-3xl overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
@@ -182,7 +244,9 @@ export function AddTransactionFlow({
               ) : (
                 <button
                   className="w-full py-3 rounded-xl bg-[#18448b] text-white font-semibold disabled:opacity-40"
-                  disabled={!accountId || !toAccountId || accountId === toAccountId}
+                  disabled={
+                    !accountId || !toAccountId || accountId === toAccountId
+                  }
                   onClick={() => setStep({ name: "amount" })}
                   type="button"
                 >
@@ -272,6 +336,7 @@ export function AddTransactionFlow({
                 }
               : null
           }
+          onClose={closeFlow}
           onDone={() => setStep({ name: "categories" })}
           type={activeType === "income" ? "income" : "expense"}
         />
@@ -280,7 +345,9 @@ export function AddTransactionFlow({
       {step.name === "amount" && (
         <AmountEntryPanel
           accountId={accountId}
-          categoryId={activeType !== "transfer" ? selectedCategory?.id : undefined}
+          categoryId={
+            activeType !== "transfer" ? selectedCategory?.id : undefined
+          }
           from={
             activeType === "income"
               ? {
@@ -297,7 +364,8 @@ export function AddTransactionFlow({
                 }
           }
           onBack={() => setStep({ name: "categories" })}
-          onDone={closeFlow}
+          onClose={closeFlow}
+          onDone={handleTransactionSaved}
           to={
             activeType === "transfer"
               ? {
@@ -322,6 +390,13 @@ export function AddTransactionFlow({
           }
           toAccountId={activeType === "transfer" ? toAccountId : undefined}
           type={activeType}
+        />
+      )}
+
+      {toastMessage && (
+        <TransactionToast
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
         />
       )}
     </>

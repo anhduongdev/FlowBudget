@@ -21,6 +21,7 @@ interface EditableCategory {
 interface CategoryFormPanelProps {
   type: "expense" | "income";
   category: EditableCategory | null;
+  onClose: () => void;
   onDone: () => void;
 }
 
@@ -69,6 +70,7 @@ function DeleteConfirmButton() {
 export function CategoryFormPanel({
   type,
   category,
+  onClose,
   onDone,
 }: CategoryFormPanelProps) {
   const router = useRouter();
@@ -120,7 +122,15 @@ export function CategoryFormPanel({
         <h2 className="font-semibold text-[15px] text-on-surface">
           {isEditing ? "Sửa danh mục" : "Thêm danh mục"}
         </h2>
-        <div className="w-6" />
+        <button
+          className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center"
+          onClick={onClose}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-on-surface-variant text-lg">
+            close
+          </span>
+        </button>
       </div>
 
       <form
@@ -200,7 +210,10 @@ export function CategoryFormPanel({
       {isEditing && (
         <div className="px-5 pb-6 shrink-0">
           {deleteState.message && (
-            <p aria-live="polite" className="text-error text-[13px] text-center mb-2">
+            <p
+              aria-live="polite"
+              className="text-error text-[13px] text-center mb-2"
+            >
               {deleteState.message}
             </p>
           )}

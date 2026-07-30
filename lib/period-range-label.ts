@@ -1,13 +1,9 @@
 import {
+  ALL_TIME_RANGE,
   type DateRange,
   getCurrentDayRange,
   isSameDateRange,
 } from "@/lib/date-range";
-
-export const ALL_TIME_RANGE: DateRange = {
-  start: new Date(Date.UTC(2000, 0, 1)),
-  end: new Date(Date.UTC(2100, 0, 1)),
-};
 
 function formatShortVn(date: Date): string {
   return `${date.getUTCDate()} THG ${date.getUTCMonth() + 1}`;

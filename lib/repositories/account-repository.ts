@@ -10,6 +10,7 @@ export function findActiveAccountsByUser(userId: bigint) {
       type: true,
       icon: true,
       color: true,
+      initial_balance: true,
       current_balance: true,
     },
     orderBy: { sort_order: "asc" },

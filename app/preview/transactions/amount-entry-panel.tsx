@@ -7,6 +7,7 @@ import {
   createTransactionAction,
   type TransactionFormState,
 } from "@/lib/actions/transaction-actions";
+import { formatDateVnLong } from "@/lib/format";
 import { evaluateArithmeticExpression } from "@/lib/safe-calculator";
 import { MiniDatePicker } from "./mini-date-picker";
 
@@ -25,7 +26,8 @@ interface AmountEntryPanelProps {
   from: PartyDisplay;
   to: PartyDisplay;
   onBack: () => void;
-  onDone: () => void;
+  onClose: () => void;
+  onDone: (transactionDate: string) => void;
 }
 
 const initialState: TransactionFormState = {};
@@ -68,12 +70,7 @@ function todayIso(): string {
 }
 
 function formatDisplayDate(iso: string): string {
-  const date = new Date(`${iso}T00:00:00`);
-  const formatted = date.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  const formatted = formatDateVnLong(iso);
   return iso === todayIso() ? `Hôm nay, ${formatted}` : formatted;
 }
 
@@ -107,6 +104,7 @@ export function AmountEntryPanel({
   from,
   to,
   onBack,
+  onClose,
   onDone,
 }: AmountEntryPanelProps) {
   const router = useRouter();
@@ -128,9 +126,9 @@ export function AmountEntryPanel({
   useEffect(() => {
     if (state.success) {
       router.refresh();
-      onDone();
+      onDone(date);
     }
-    // Intentionally react only to state transitions, not to onDone/router
+    // Intentionally react only to state transitions, not to onDone/router/date
     // identity (callers pass a fresh closure on every render).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
@@ -138,6 +136,9 @@ export function AmountEntryPanel({
   const evaluated = evaluateArithmeticExpression(expression);
   const displayAmount = evaluated !== null ? Math.max(evaluated, 0) : 0;
   const canSubmit = evaluated !== null && evaluated > 0;
+  const otherFieldError = Object.entries(state.errors ?? {}).find(
+    ([field]) => field !== "amount",
+  )?.[1][0];
 
   function pressKey(key: KeyDef) {
     setExpression((current) => {
@@ -162,17 +163,30 @@ export function AmountEntryPanel({
   }
 
   const typeLabel =
-    type === "income" ? "Thu nhập" : type === "transfer" ? "Số tiền" : "Chi phí";
+    type === "income"
+      ? "Thu nhập"
+      : type === "transfer"
+        ? "Số tiền"
+        : "Chi phí";
 
   return (
     <div className="fixed top-[192px] bottom-0 w-full max-w-[430px] z-[80] flex flex-col bg-background text-on-surface rounded-t-3xl overflow-hidden shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
-      <div className="flex items-center px-2 py-1 shrink-0">
+      <div className="flex items-center justify-between px-2 py-1 shrink-0">
         <button
           className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant"
           onClick={onBack}
           type="button"
         >
           <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <button
+          className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center"
+          onClick={onClose}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-on-surface-variant text-lg">
+            close
+          </span>
         </button>
       </div>
 
@@ -205,9 +219,7 @@ export function AmountEntryPanel({
             </span>
           </div>
           <div className="min-w-0 text-left">
-            <p className="text-[9px] text-white/70 leading-tight">
-              {to.label}
-            </p>
+            <p className="text-[9px] text-white/70 leading-tight">{to.label}</p>
             <p className="text-[12px] font-bold text-white truncate leading-tight">
               {to.name}
             </p>
@@ -235,9 +247,12 @@ export function AmountEntryPanel({
         <input name="transactionDate" type="hidden" value={date} />
         <input name="note" type="hidden" value={note} />
 
-        {state.message && (
-          <p aria-live="polite" className="text-error text-[13px] text-center mb-3">
-            {state.message}
+        {(state.message || otherFieldError) && (
+          <p
+            aria-live="polite"
+            className="text-error text-[13px] text-center mb-3"
+          >
+            {state.message || otherFieldError}
           </p>
         )}
 

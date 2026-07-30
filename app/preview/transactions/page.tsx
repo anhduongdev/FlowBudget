@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import {
-  formatDateIso,
-  parseDateRangeParams,
-} from "@/lib/date-range";
+import { formatDateIso, parseDateRangeParams } from "@/lib/date-range";
 import { formatVnd } from "@/lib/format";
 import { getPeriodRangeLabel } from "@/lib/period-range-label";
 import {
@@ -78,7 +75,10 @@ export default async function TransactionsPreviewPage({
         {/* Top AppBar */}
         <header className="fixed top-0 w-full max-w-[430px] z-50 bg-white/85 backdrop-blur-xl px-6 py-2.5 flex flex-col items-center gap-2 border-b border-[#18448b]/10">
           <div className="flex justify-between items-center w-full">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-low active:scale-90 transition-transform" type="button">
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-low active:scale-90 transition-transform"
+              type="button"
+            >
               <span className="material-symbols-outlined text-on-surface-variant text-[18px]">
                 account_circle
               </span>
@@ -95,7 +95,10 @@ export default async function TransactionsPreviewPage({
                 {formatVnd(totalBalance)}
               </h1>
             </div>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-low active:scale-90 transition-transform" type="button">
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-low active:scale-90 transition-transform"
+              type="button"
+            >
               <span className="material-symbols-outlined text-on-surface-variant text-[18px]">
                 search
               </span>
@@ -142,14 +145,14 @@ export default async function TransactionsPreviewPage({
             accounts={accounts}
             dayGroups={dayGroups}
             emptyMessage="Chưa có giao dịch nào trong khoảng thời gian này."
-            expenseCategories={expenseCategories}
-            incomeCategories={incomeCategories}
             todayIso={todayIso}
           />
         </main>
 
         <AddTransactionFlow
           accounts={accounts}
+          currentFrom={currentFrom}
+          currentTo={currentTo}
           expenseCategories={expenseCategories}
           incomeCategories={incomeCategories}
         />

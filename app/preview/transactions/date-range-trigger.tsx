@@ -4,14 +4,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  ALL_TIME_RANGE,
+  detectPeriodShape,
   formatDateIso,
   getCurrentDayRange,
   getCurrentMonthRange,
   getCurrentWeekRange,
   getCurrentYearRange,
+  parseDateRangeParams,
+  shiftDateRange,
   type DateRange,
 } from "@/lib/date-range";
-import { ALL_TIME_RANGE } from "@/lib/period-range-label";
 import { MiniDatePicker } from "./mini-date-picker";
 import { RangeCalendarPicker } from "./range-calendar-picker";
 
@@ -23,7 +26,10 @@ interface DateRangeTriggerProps {
 
 type Step = "closed" | "menu" | "single-day" | "range";
 
-function inclusiveRangeToParams(range: DateRange): { from: string; to: string } {
+function inclusiveRangeToParams(range: DateRange): {
+  from: string;
+  to: string;
+} {
   const inclusiveEnd = new Date(range.end);
   inclusiveEnd.setUTCDate(inclusiveEnd.getUTCDate() - 1);
   return { from: formatDateIso(range.start), to: formatDateIso(inclusiveEnd) };
@@ -64,31 +70,77 @@ export function DateRangeTrigger({
     setStep("closed");
   }
 
+  const currentRange = parseDateRangeParams(currentFrom, currentTo);
+  const isAllTime = detectPeriodShape(currentRange) === "all-time";
+  const todayIso = formatDateIso(now);
+  const isOutsideCurrentPeriod = todayIso < currentFrom || todayIso > currentTo;
+  const accentColorClass = isOutsideCurrentPeriod
+    ? "text-error"
+    : "text-[#18448b]";
+  const accentMutedColorClass = isOutsideCurrentPeriod
+    ? "text-error/50"
+    : "text-[#18448b]/50";
+  const accentBgClass = isOutsideCurrentPeriod
+    ? "bg-error/10"
+    : "bg-[#18448b]/[0.06]";
+
+  function goToAdjacentPeriod(direction: -1 | 1) {
+    applyRange(shiftDateRange(currentRange, direction));
+  }
+
   return (
     <>
-      <button
-        className="flex items-center justify-between w-full bg-[#18448b]/[0.06] rounded-full px-3 py-1.5"
-        onClick={() => setStep("menu")}
-        type="button"
+      <div
+        className={`flex items-center justify-between w-full rounded-full px-1 py-1.5 ${accentBgClass}`}
       >
-        <span className="material-symbols-outlined text-[#18448b]/50" style={{ fontSize: "16px" }}>
-          chevron_left
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="material-symbols-outlined text-[#18448b]" style={{ fontSize: "14px" }}>
+        <button
+          className="px-2 disabled:opacity-30"
+          disabled={isAllTime}
+          onClick={() => goToAdjacentPeriod(-1)}
+          type="button"
+        >
+          <span
+            className={`material-symbols-outlined ${accentMutedColorClass}`}
+            style={{ fontSize: "16px" }}
+          >
+            chevron_left
+          </span>
+        </button>
+        <button
+          className="flex items-center gap-1"
+          onClick={() => setStep("menu")}
+          type="button"
+        >
+          <span
+            className={`material-symbols-outlined ${accentColorClass}`}
+            style={{ fontSize: "14px" }}
+          >
             calendar_month
           </span>
-          <span className="text-[11px] font-semibold text-[#18448b]">
+          <span className={`text-[11px] font-semibold ${accentColorClass}`}>
             {label}
           </span>
-          <span className="material-symbols-outlined text-[#18448b]/50" style={{ fontSize: "14px" }}>
+          <span
+            className={`material-symbols-outlined ${accentMutedColorClass}`}
+            style={{ fontSize: "14px" }}
+          >
             keyboard_arrow_down
           </span>
-        </span>
-        <span className="material-symbols-outlined text-[#18448b]/50" style={{ fontSize: "16px" }}>
-          chevron_right
-        </span>
-      </button>
+        </button>
+        <button
+          className="px-2 disabled:opacity-30"
+          disabled={isAllTime}
+          onClick={() => goToAdjacentPeriod(1)}
+          type="button"
+        >
+          <span
+            className={`material-symbols-outlined ${accentMutedColorClass}`}
+            style={{ fontSize: "16px" }}
+          >
+            chevron_right
+          </span>
+        </button>
+      </div>
 
       {/*
         Portaled to document.body: this trigger lives inside <header>, which

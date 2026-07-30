@@ -3,6 +3,11 @@ export interface DateRange {
   end: Date;
 }
 
+export const ALL_TIME_RANGE: DateRange = {
+  start: new Date(Date.UTC(2000, 0, 1)),
+  end: new Date(Date.UTC(2100, 0, 1)),
+};
+
 export function getCurrentDayRange(now: Date = new Date()): DateRange {
   const start = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
@@ -77,6 +82,94 @@ export function isSameDateRange(a: DateRange, b: DateRange): boolean {
   return (
     a.start.getTime() === b.start.getTime() && a.end.getTime() === b.end.getTime()
   );
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+export type PeriodShape = "day" | "week" | "month" | "year" | "all-time" | "custom";
+
+function isMonthRangeShape(range: DateRange): boolean {
+  const { start, end } = range;
+  if (start.getUTCDate() !== 1 || end.getUTCDate() !== 1) {
+    return false;
+  }
+  const monthsBetween =
+    (end.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+    (end.getUTCMonth() - start.getUTCMonth());
+  return monthsBetween === 1;
+}
+
+function isYearRangeShape(range: DateRange): boolean {
+  const { start, end } = range;
+  return (
+    start.getUTCMonth() === 0 &&
+    start.getUTCDate() === 1 &&
+    end.getUTCMonth() === 0 &&
+    end.getUTCDate() === 1 &&
+    end.getUTCFullYear() - start.getUTCFullYear() === 1
+  );
+}
+
+export function detectPeriodShape(range: DateRange): PeriodShape {
+  if (isSameDateRange(range, ALL_TIME_RANGE)) {
+    return "all-time";
+  }
+
+  const diffDays = Math.round((range.end.getTime() - range.start.getTime()) / MS_PER_DAY);
+
+  if (diffDays === 1) {
+    return "day";
+  }
+  if (diffDays === 7 && getMondayFirstWeekdayIndex(range.start) === 0) {
+    return "week";
+  }
+  if (isYearRangeShape(range)) {
+    return "year";
+  }
+  if (isMonthRangeShape(range)) {
+    return "month";
+  }
+  return "custom";
+}
+
+export function shiftDateRange(range: DateRange, direction: -1 | 1): DateRange {
+  const shape = detectPeriodShape(range);
+
+  switch (shape) {
+    case "all-time":
+      return range;
+    case "day":
+    case "week": {
+      const stepDays = shape === "day" ? 1 : 7;
+      const start = new Date(range.start);
+      start.setUTCDate(start.getUTCDate() + direction * stepDays);
+      const end = new Date(range.end);
+      end.setUTCDate(end.getUTCDate() + direction * stepDays);
+      return { start, end };
+    }
+    case "month": {
+      const year = range.start.getUTCFullYear();
+      const month = range.start.getUTCMonth() + direction;
+      return {
+        start: new Date(Date.UTC(year, month, 1)),
+        end: new Date(Date.UTC(year, month + 1, 1)),
+      };
+    }
+    case "year": {
+      const year = range.start.getUTCFullYear() + direction;
+      return {
+        start: new Date(Date.UTC(year, 0, 1)),
+        end: new Date(Date.UTC(year + 1, 0, 1)),
+      };
+    }
+    case "custom": {
+      const lengthMs = range.end.getTime() - range.start.getTime();
+      return {
+        start: new Date(range.start.getTime() + direction * lengthMs),
+        end: new Date(range.end.getTime() + direction * lengthMs),
+      };
+    }
+  }
 }
 
 export function formatDateIso(date: Date): string {
