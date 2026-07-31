@@ -5,6 +5,7 @@ import { formatVnd } from "@/lib/format";
 import { evaluateArithmeticExpression } from "@/lib/safe-calculator";
 import type { AccountOption } from "@/lib/services/account-service";
 import type { CategoryOption } from "@/lib/services/category-service";
+import { CategoryFormPanel } from "../category-form-panel";
 import { WEEKDAY_LABELS, type BulkTransactionRuleDraft } from "./types";
 
 interface RuleFormPanelProps {
@@ -43,6 +44,9 @@ export function RuleFormPanel({
     initialDraft?.weekdays ?? ALL_WEEKDAYS,
   );
   const [note, setNote] = useState(initialDraft?.note ?? "");
+  const [categoryFormFor, setCategoryFormFor] = useState<
+    { category: CategoryOption | null } | null
+  >(null);
 
   const categories = type === "income" ? incomeCategories : expenseCategories;
   const selectedCategory = categories.find((item) => item.id === categoryId);
@@ -90,6 +94,25 @@ export function RuleFormPanel({
       weekdays,
       note: note.trim() || null,
     });
+  }
+
+  if (categoryFormFor) {
+    return (
+      <>
+        <button
+          aria-label="Đóng"
+          className="fixed inset-0 z-[65] bg-black/40"
+          onClick={onClose}
+          type="button"
+        />
+        <CategoryFormPanel
+          category={categoryFormFor.category}
+          onClose={onClose}
+          onDone={() => setCategoryFormFor(null)}
+          type={type}
+        />
+      </>
+    );
   }
 
   return (
@@ -168,29 +191,57 @@ export function RuleFormPanel({
                 </span>
               </button>
               {categories.map((category) => (
-                <button
-                  className="flex flex-col items-center gap-1.5"
+                <div
+                  className="relative flex flex-col items-center gap-1.5"
                   key={category.id}
-                  onClick={() => setCategoryId(category.id)}
-                  type="button"
                 >
-                  <span
-                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      categoryId === category.id
-                        ? "ring-2 ring-[#18448b] ring-offset-2 ring-offset-background"
-                        : ""
-                    }`}
-                    style={{ backgroundColor: category.color }}
+                  <button
+                    className="flex flex-col items-center gap-1.5"
+                    onClick={() => setCategoryId(category.id)}
+                    type="button"
                   >
-                    <span className="material-symbols-outlined text-white text-lg">
-                      {category.icon}
+                    <span
+                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        categoryId === category.id
+                          ? "ring-2 ring-[#18448b] ring-offset-2 ring-offset-background"
+                          : ""
+                      }`}
+                      style={{ backgroundColor: category.color }}
+                    >
+                      <span className="material-symbols-outlined text-white text-lg">
+                        {category.icon}
+                      </span>
                     </span>
-                  </span>
-                  <span className="text-[11px] text-center leading-tight text-on-surface">
-                    {category.name}
-                  </span>
-                </button>
+                    <span className="text-[11px] text-center leading-tight text-on-surface">
+                      {category.name}
+                    </span>
+                  </button>
+                  <button
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] flex items-center justify-center"
+                    onClick={() => setCategoryFormFor({ category })}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined text-[12px] text-on-surface-variant">
+                      edit
+                    </span>
+                  </button>
+                </div>
               ))}
+
+              <button
+                className="flex flex-col items-center gap-1.5"
+                onClick={() => setCategoryFormFor({ category: null })}
+                type="button"
+              >
+                <span className="w-12 h-12 rounded-full border-2 border-dashed border-outline-variant flex items-center justify-center">
+                  <span className="material-symbols-outlined text-on-surface-variant text-lg">
+                    add
+                  </span>
+                </span>
+                <span className="text-[11px] text-center leading-tight text-on-surface-variant">
+                  Thêm danh mục
+                </span>
+              </button>
             </div>
           </div>
 

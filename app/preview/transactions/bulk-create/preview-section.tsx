@@ -10,28 +10,41 @@ export interface PreviewItem {
 
 interface PreviewSectionProps {
   items: PreviewItem[];
-  totalExpense: number;
-  totalIncome: number;
-  currentTotalBalance: number;
+  newTotalExpense: number;
+  newTotalIncome: number;
+  existingTotalExpense: number;
+  existingTotalIncome: number;
+  openingBalance: number;
 }
 
 export function PreviewSection({
   items,
-  totalExpense,
-  totalIncome,
-  currentTotalBalance,
+  newTotalExpense,
+  newTotalIncome,
+  existingTotalExpense,
+  existingTotalIncome,
+  openingBalance,
 }: PreviewSectionProps) {
-  const projectedBalance = currentTotalBalance + totalIncome - totalExpense;
+  const projectedBalance =
+    openingBalance +
+    existingTotalIncome +
+    newTotalIncome -
+    existingTotalExpense -
+    newTotalExpense;
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white p-3 rounded-2xl shadow-[0_4px_12px_-2px_rgba(0,0,0,0.05)] border border-[#18448b]/10">
           <p className="text-[11px] font-medium text-on-surface-variant mb-1">
-            Số giao dịch sẽ tạo
+            Số dư đầu kỳ
           </p>
-          <p className="text-[15px] font-bold text-[#18448b]">
-            {items.length}
+          <p
+            className={`text-[15px] font-bold ${
+              openingBalance < 0 ? "text-error" : "text-[#18448b]"
+            }`}
+          >
+            {formatVnd(openingBalance)}
           </p>
         </div>
         <div className="bg-white p-3 rounded-2xl shadow-[0_4px_12px_-2px_rgba(0,0,0,0.05)] border border-[#18448b]/10">
@@ -48,18 +61,18 @@ export function PreviewSection({
         </div>
         <div className="bg-white p-3 rounded-2xl shadow-[0_4px_12px_-2px_rgba(0,0,0,0.05)] border border-[#18448b]/10">
           <p className="text-[11px] font-medium text-on-surface-variant mb-1">
-            Tổng chi
+            Tổng chi sẽ tạo
           </p>
           <p className="text-[15px] font-bold text-error">
-            {formatVnd(totalExpense)}
+            {formatVnd(newTotalExpense)}
           </p>
         </div>
         <div className="bg-white p-3 rounded-2xl shadow-[0_4px_12px_-2px_rgba(0,0,0,0.05)] border border-[#18448b]/10">
           <p className="text-[11px] font-medium text-on-surface-variant mb-1">
-            Tổng thu
+            Tổng thu sẽ tạo
           </p>
           <p className="text-[15px] font-bold text-[#18448b]">
-            {formatVnd(totalIncome)}
+            {formatVnd(newTotalIncome)}
           </p>
         </div>
       </div>

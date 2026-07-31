@@ -3,14 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { transactions_type } from "@/app/generated/prisma/enums";
-import { parseInclusiveDateRange } from "@/lib/date-range";
+import { formatDateIso, parseInclusiveDateRange } from "@/lib/date-range";
+import {
+  getTotalBalancesAsOfDates,
+  type AccountOption,
+} from "@/lib/services/account-service";
 import { getCurrentUser } from "@/lib/services/auth-service";
 import {
   createBulkTransactionsForUser,
   EmptyBulkResultError,
+  getTransactionsForUser,
   InvalidAccountError,
   InvalidCategoryError,
   type BulkTransactionSummary,
+  type TransactionDayGroup,
 } from "@/lib/services/transaction-service";
 import { bulkCreateTransactionsSchema } from "@/lib/validations/bulk-transaction";
 
@@ -73,4 +79,39 @@ export async function createBulkTransactionsAction(
     }
     throw error;
   }
+}
+
+export interface PeriodOverview {
+  dayGroups: TransactionDayGroup[];
+  openingBalance: number;
+}
+
+export async function getPeriodOverviewAction(
+  from: string,
+  to: string,
+  accounts: AccountOption[],
+): Promise<PeriodOverview> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { dayGroups: [], openingBalance: 0 };
+  }
+
+  const range = parseInclusiveDateRange(from, to);
+  if (!range) {
+    return { dayGroups: [], openingBalance: 0 };
+  }
+
+  const dayBeforeFrom = new Date(range.start);
+  dayBeforeFrom.setUTCDate(dayBeforeFrom.getUTCDate() - 1);
+  const dayBeforeFromIso = formatDateIso(dayBeforeFrom);
+
+  const [dayGroups, balancesAsOf] = await Promise.all([
+    getTransactionsForUser(user.id, range),
+    getTotalBalancesAsOfDates(user.id, accounts, [dayBeforeFromIso]),
+  ]);
+
+  return {
+    dayGroups,
+    openingBalance: balancesAsOf[dayBeforeFromIso] ?? 0,
+  };
 }

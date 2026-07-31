@@ -175,7 +175,7 @@ export function RangeCalendarPicker({
         : "Chọn ngày bắt đầu";
 
   return (
-    <div className="fixed inset-0 z-[95] bg-background text-on-surface flex flex-col">
+    <div className="fixed inset-x-0 top-0 bottom-0 mx-auto w-full max-w-[430px] z-[95] bg-background text-on-surface flex flex-col">
       <div className="flex items-center gap-3 px-4 pt-4 pb-2 shrink-0 border-b border-outline-variant/20">
         <button
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors"

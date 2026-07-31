@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import { categories_type } from "@/app/generated/prisma/enums";
 import { formatDateIso, parseDateRangeParams } from "@/lib/date-range";
 import {
+  getTotalBalancesAsOfDates,
   listActiveAccountsForUser,
-  sumAccountBalances,
 } from "@/lib/services/account-service";
 import { getCurrentUser } from "@/lib/services/auth-service";
 import { listCategoriesForSelect } from "@/lib/services/category-service";
+import { getTransactionsForUser } from "@/lib/services/transaction-service";
 import { BulkCreateFlow } from "./bulk-create-flow";
 
 export const metadata: Metadata = {
@@ -34,13 +35,21 @@ export default async function BulkCreateTransactionsPage({
   const initialFrom = formatDateIso(range.start);
   const initialTo = formatDateIso(inclusiveEnd);
 
-  const [accounts, expenseCategories, incomeCategories] = await Promise.all([
-    listActiveAccountsForUser(user.id),
-    listCategoriesForSelect(user.id, categories_type.expense),
-    listCategoriesForSelect(user.id, categories_type.income),
-  ]);
+  const dayBeforeFrom = new Date(range.start);
+  dayBeforeFrom.setUTCDate(dayBeforeFrom.getUTCDate() - 1);
+  const dayBeforeFromIso = formatDateIso(dayBeforeFrom);
 
-  const currentTotalBalance = sumAccountBalances(accounts);
+  const accounts = await listActiveAccountsForUser(user.id);
+
+  const [expenseCategories, incomeCategories, initialExistingDayGroups, balancesAsOf] =
+    await Promise.all([
+      listCategoriesForSelect(user.id, categories_type.expense),
+      listCategoriesForSelect(user.id, categories_type.income),
+      getTransactionsForUser(user.id, range),
+      getTotalBalancesAsOfDates(user.id, accounts, [dayBeforeFromIso]),
+    ]);
+
+  const initialOpeningBalance = balancesAsOf[dayBeforeFromIso] ?? 0;
 
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
@@ -48,7 +57,7 @@ export default async function BulkCreateTransactionsPage({
         <header className="sticky top-0 z-50 rounded-t-3xl bg-white/85 backdrop-blur-xl px-4 py-3 flex items-center gap-3 border-b border-[#18448b]/10">
           <Link
             className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-low active:scale-90 transition-transform"
-            href="/preview/transactions"
+            href={`/preview/transactions?from=${initialFrom}&to=${initialTo}`}
           >
             <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
               arrow_back
@@ -61,10 +70,11 @@ export default async function BulkCreateTransactionsPage({
 
         <BulkCreateFlow
           accounts={accounts}
-          currentTotalBalance={currentTotalBalance}
           expenseCategories={expenseCategories}
           incomeCategories={incomeCategories}
+          initialExistingDayGroups={initialExistingDayGroups}
           initialFrom={initialFrom}
+          initialOpeningBalance={initialOpeningBalance}
           initialTo={initialTo}
         />
       </div>

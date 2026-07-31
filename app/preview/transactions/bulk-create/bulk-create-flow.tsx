@@ -1,21 +1,25 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState, useMemo, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useState } from "react";
 import {
   createBulkTransactionsAction,
+  getPeriodOverviewAction,
   type BulkTransactionActionState,
 } from "@/lib/actions/bulk-transaction-actions";
 import { getDatesInRangeByWeekdays, parseInclusiveDateRange } from "@/lib/date-range";
-import { formatDateVnLong, formatVnd } from "@/lib/format";
+import { formatVnd } from "@/lib/format";
+import { getPeriodRangeLabel } from "@/lib/period-range-label";
 import type { AccountOption } from "@/lib/services/account-service";
 import type { CategoryOption } from "@/lib/services/category-service";
+import type { TransactionDayGroup } from "@/lib/services/transaction-service";
 import {
   bulkCreateTransactionsSchema,
   MAX_BULK_RANGE_DAYS,
   MAX_GENERATED_TRANSACTIONS,
 } from "@/lib/validations/bulk-transaction";
-import { RangeCalendarPicker } from "../range-calendar-picker";
+import { DateRangeTrigger } from "../date-range-trigger";
+import { TransactionToast } from "../transaction-toast";
+import { ExistingRulesSummary } from "./existing-rules-summary";
 import { PreviewSection, type PreviewItem } from "./preview-section";
 import { RuleCard } from "./rule-card";
 import { RuleFormPanel } from "./rule-form-panel";
@@ -23,10 +27,11 @@ import type { BulkTransactionRuleDraft } from "./types";
 
 interface BulkCreateFlowProps {
   accounts: AccountOption[];
-  currentTotalBalance: number;
   expenseCategories: CategoryOption[];
   incomeCategories: CategoryOption[];
+  initialExistingDayGroups: TransactionDayGroup[];
   initialFrom: string;
+  initialOpeningBalance: number;
   initialTo: string;
 }
 
@@ -37,24 +42,70 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export function BulkCreateFlow({
   accounts,
-  currentTotalBalance,
   expenseCategories,
   incomeCategories,
+  initialExistingDayGroups,
   initialFrom,
+  initialOpeningBalance,
   initialTo,
 }: BulkCreateFlowProps) {
   const [from, setFrom] = useState(initialFrom);
   const [to, setTo] = useState(initialTo);
-  const [rangePickerOpen, setRangePickerOpen] = useState(false);
   const [rules, setRules] = useState<BulkTransactionRuleDraft[]>([]);
   const [panel, setPanel] = useState<PanelState>(null);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [existingDayGroups, setExistingDayGroups] = useState(
+    initialExistingDayGroups,
+  );
+  const [openingBalance, setOpeningBalance] = useState(initialOpeningBalance);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [state, dispatch, isPending] = useActionState(
     createBulkTransactionsAction,
     INITIAL_ACTION_STATE,
   );
+  const [handledState, setHandledState] = useState(state);
+
+  if (state !== handledState) {
+    setHandledState(state);
+    if (state.status === "success" && state.summary) {
+      setToastMessage(
+        `Đã tạo ${state.summary.transactionCount} giao dịch. Tổng chi ${formatVnd(
+          state.summary.totalExpense,
+        )} · Tổng thu ${formatVnd(state.summary.totalIncome)}.`,
+      );
+      setRules([]);
+      setRefreshKey((key) => key + 1);
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    getPeriodOverviewAction(from, to, accounts).then((overview) => {
+      if (!cancelled) {
+        setExistingDayGroups(overview.dayGroups);
+        setOpeningBalance(overview.openingBalance);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [from, to, refreshKey, accounts]);
 
   const range = useMemo(() => parseInclusiveDateRange(from, to), [from, to]);
+  const periodLabel = range ? getPeriodRangeLabel(range) : `${from} – ${to}`;
+
+  const existingTotals = useMemo(() => {
+    let expense = 0;
+    let income = 0;
+    for (const group of existingDayGroups) {
+      for (const item of group.items) {
+        if (item.type === "expense") expense += item.amount;
+        else if (item.type === "income") income += item.amount;
+      }
+    }
+    return { expense, income };
+  }, [existingDayGroups]);
 
   const previewItems = useMemo<PreviewItem[]>(() => {
     if (!range) return [];
@@ -126,58 +177,41 @@ export function BulkCreateFlow({
       );
       return;
     }
-    dispatch(parsed.data);
+    startTransition(() => {
+      dispatch(parsed.data);
+    });
   }
 
   const editingDraft = panel?.mode === "edit" ? rules[panel.index] : null;
 
-  if (state.status === "success" && state.summary) {
-    return (
-      <div className="px-6 py-10 flex flex-col items-center text-center gap-3">
-        <span className="material-symbols-outlined text-[#18448b] text-5xl">
-          task_alt
-        </span>
-        <p className="text-[16px] font-bold text-on-surface">
-          Đã tạo {state.summary.transactionCount} giao dịch
-        </p>
-        <p className="text-[13px] text-on-surface-variant">
-          Tổng chi {formatVnd(state.summary.totalExpense)} · Tổng thu{" "}
-          {formatVnd(state.summary.totalIncome)}
-        </p>
-        <Link
-          className="mt-3 px-5 py-2.5 rounded-xl bg-[#18448b] text-white text-[13px] font-semibold"
-          href={`/preview/transactions?from=${from}&to=${to}`}
-        >
-          Về trang giao dịch
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="px-6 py-5 space-y-5 pb-28">
-        <div className="bg-white rounded-2xl shadow-[0_4px_12px_-2px_rgba(0,0,0,0.05)] border border-[#18448b]/10 p-4">
-          <p className="text-[12px] text-on-surface-variant mb-1">
-            Kỳ áp dụng
-          </p>
-          <button
-            className="w-full flex items-center justify-between"
-            onClick={() => setRangePickerOpen(true)}
-            type="button"
-          >
-            <span className="text-[14px] font-bold text-[#18448b]">
-              {formatDateVnLong(from)} – {formatDateVnLong(to)}
-            </span>
-            <span className="material-symbols-outlined text-[#18448b]">
-              edit_calendar
-            </span>
-          </button>
+        <div>
+          <DateRangeTrigger
+            currentFrom={from}
+            currentTo={to}
+            label={periodLabel}
+            onChange={(newFrom, newTo) => {
+              setFrom(newFrom);
+              setTo(newTo);
+            }}
+          />
           {isRangeTooLong && (
             <p className="text-[11px] text-error mt-2">
               Khoảng ngày tối đa {MAX_BULK_RANGE_DAYS} ngày.
             </p>
           )}
+        </div>
+
+        <div>
+          <p className="text-[13px] font-semibold text-on-surface mb-3">
+            Giao dịch đã có trong kỳ ({existingDayGroups.reduce((sum, group) => sum + group.items.length, 0)})
+          </p>
+          <ExistingRulesSummary
+            dayGroups={existingDayGroups}
+            emptyMessage="Chưa có giao dịch nào trong kỳ này."
+          />
         </div>
 
         <div className="space-y-3">
@@ -212,10 +246,12 @@ export function BulkCreateFlow({
             Xem trước
           </p>
           <PreviewSection
-            currentTotalBalance={currentTotalBalance}
+            existingTotalExpense={existingTotals.expense}
+            existingTotalIncome={existingTotals.income}
             items={previewItems}
-            totalExpense={totalExpense}
-            totalIncome={totalIncome}
+            newTotalExpense={totalExpense}
+            newTotalIncome={totalIncome}
+            openingBalance={openingBalance}
           />
           {isOverGeneratedLimit && (
             <p className="text-[11px] text-error mt-2">
@@ -251,19 +287,6 @@ export function BulkCreateFlow({
         </button>
       </div>
 
-      {rangePickerOpen && (
-        <RangeCalendarPicker
-          initialFrom={from}
-          initialTo={to}
-          onApply={(newFrom, newTo) => {
-            setFrom(newFrom);
-            setTo(newTo);
-            setRangePickerOpen(false);
-          }}
-          onClose={() => setRangePickerOpen(false)}
-        />
-      )}
-
       {panel && (
         <RuleFormPanel
           accounts={accounts}
@@ -272,6 +295,13 @@ export function BulkCreateFlow({
           initialDraft={editingDraft}
           onClose={closePanel}
           onSave={saveRule}
+        />
+      )}
+
+      {toastMessage && (
+        <TransactionToast
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
         />
       )}
     </>

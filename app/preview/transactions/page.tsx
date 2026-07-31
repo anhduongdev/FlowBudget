@@ -11,6 +11,7 @@ import { getCurrentUser } from "@/lib/services/auth-service";
 import { getCategoriesWithMonthlySpending } from "@/lib/services/category-service";
 import { getTransactionsForUser } from "@/lib/services/transaction-service";
 import { AddTransactionFlow } from "./add-transaction-flow";
+import { BottomLogoMenu } from "./bottom-logo-menu";
 import { DateRangeTrigger } from "./date-range-trigger";
 import { TransactionList } from "./transaction-list";
 
@@ -151,14 +152,7 @@ export default async function TransactionsPreviewPage({
 
         {/* Bottom Brand Bar */}
         <div className="fixed bottom-0 w-full max-w-[430px] h-12 z-50 bg-white/90 backdrop-blur-2xl border-t border-[#18448b]/10 rounded-3xl shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.03)]">
-          <div className="absolute left-1/2 -translate-x-1/2 -top-6 w-14 h-14 rounded-full bg-white shadow-[0_8px_24px_-4px_rgba(24,68,139,0.4)] ring-4 ring-white flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt="FlowBudget"
-              className="w-full h-full rounded-full object-cover"
-              src="/logo_round.png"
-            />
-          </div>
+          <BottomLogoMenu currentFrom={currentFrom} currentTo={currentTo} />
         </div>
       </div>
     </div>

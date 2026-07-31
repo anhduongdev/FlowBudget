@@ -22,6 +22,12 @@ interface DateRangeTriggerProps {
   currentFrom: string;
   currentTo: string;
   label: string;
+  /**
+   * Khi truyền vào, component gọi callback này thay vì tự điều hướng tới
+   * `/preview/transactions?from=...&to=...` — cho phép tái dùng UI chọn kỳ
+   * này ở những trang khác chỉ cần cập nhật state cục bộ (không đổi URL).
+   */
+  onChange?: (from: string, to: string) => void;
 }
 
 type Step = "closed" | "menu" | "single-day" | "range";
@@ -43,6 +49,7 @@ export function DateRangeTrigger({
   currentFrom,
   currentTo,
   label,
+  onChange,
 }: DateRangeTriggerProps) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("closed");
@@ -54,20 +61,26 @@ export function DateRangeTrigger({
   const weekInclusiveEnd = new Date(weekRange.end);
   weekInclusiveEnd.setUTCDate(weekInclusiveEnd.getUTCDate() - 1);
 
+  function navigate(from: string, to: string) {
+    if (onChange) {
+      onChange(from, to);
+    } else {
+      router.push(`/preview/transactions?from=${from}&to=${to}`);
+    }
+    setStep("closed");
+  }
+
   function applyRange(range: DateRange) {
     const params = inclusiveRangeToParams(range);
-    router.push(`/preview/transactions?from=${params.from}&to=${params.to}`);
-    setStep("closed");
+    navigate(params.from, params.to);
   }
 
   function applySingleDay(iso: string) {
-    router.push(`/preview/transactions?from=${iso}&to=${iso}`);
-    setStep("closed");
+    navigate(iso, iso);
   }
 
   function applyCustomRange(from: string, to: string) {
-    router.push(`/preview/transactions?from=${from}&to=${to}`);
-    setStep("closed");
+    navigate(from, to);
   }
 
   const currentRange = parseDateRangeParams(currentFrom, currentTo);
