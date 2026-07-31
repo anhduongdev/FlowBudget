@@ -5,6 +5,7 @@ import {
 } from "@/lib/category-options";
 import {
   formatDateIso,
+  getDatesInRangeByWeekdays,
   getMondayFirstWeekdayIndex,
   type DateRange,
 } from "@/lib/date-range";
@@ -13,6 +14,7 @@ import { findAccountByIdForUser } from "@/lib/repositories/account-repository";
 import { findCategoryByIdForUser } from "@/lib/repositories/category-repository";
 import {
   countTransactionsForUser,
+  createManyTransactionsWithBalanceUpdates,
   createTransactionWithBalanceUpdates,
   deleteTransactionWithBalanceUpdates,
   findRecentTransactionsForUser,
@@ -22,6 +24,7 @@ import {
   sumTransactionAmountForUser,
   updateTransactionWithBalanceUpdates,
   type AccountBalanceAdjustment,
+  type BulkTransactionRow,
 } from "@/lib/repositories/transaction-repository";
 
 export async function getMonthlyExpenseTotal(
@@ -130,6 +133,7 @@ export function buildWeekOverWeekInsight(
 export class InvalidAccountError extends Error {}
 export class InvalidCategoryError extends Error {}
 export class TransactionNotFoundError extends Error {}
+export class EmptyBulkResultError extends Error {}
 
 export interface CreateTransactionForUserInput {
   type: transactions_type;
@@ -246,6 +250,136 @@ export async function createTransactionForUser(
     },
     adjustments,
   );
+}
+
+export interface BulkTransactionRuleInput {
+  type: transactions_type;
+  accountId: bigint;
+  categoryId: bigint | null;
+  amount: number;
+  weekdays: number[];
+  note: string | null;
+}
+
+export interface CreateBulkTransactionsForUserInput {
+  range: DateRange;
+  rules: BulkTransactionRuleInput[];
+}
+
+export interface BulkTransactionSummary {
+  transactionCount: number;
+  totalExpense: number;
+  totalIncome: number;
+}
+
+async function validateBulkRuleReferences(
+  userId: bigint,
+  rules: BulkTransactionRuleInput[],
+): Promise<void> {
+  const uniqueAccountIds = [...new Set(rules.map((rule) => rule.accountId))];
+  const accounts = await Promise.all(
+    uniqueAccountIds.map((id) => findAccountByIdForUser(id, userId)),
+  );
+  if (accounts.some((account) => !account)) {
+    throw new InvalidAccountError("Tài khoản không hợp lệ.");
+  }
+
+  const uniqueCategoryRefs = new Map<
+    string,
+    { id: bigint; type: transactions_type }
+  >();
+  for (const rule of rules) {
+    if (rule.categoryId) {
+      uniqueCategoryRefs.set(`${rule.categoryId}:${rule.type}`, {
+        id: rule.categoryId,
+        type: rule.type,
+      });
+    }
+  }
+  const categories = await Promise.all(
+    [...uniqueCategoryRefs.values()].map((ref) =>
+      findCategoryByIdForUser(
+        ref.id,
+        userId,
+        ref.type === transactions_type.expense
+          ? categories_type.expense
+          : categories_type.income,
+      ),
+    ),
+  );
+  if (categories.some((category) => !category)) {
+    throw new InvalidCategoryError("Danh mục không hợp lệ.");
+  }
+}
+
+export async function createBulkTransactionsForUser(
+  userId: bigint,
+  input: CreateBulkTransactionsForUserInput,
+): Promise<BulkTransactionSummary> {
+  await validateBulkRuleReferences(userId, input.rules);
+
+  const rows: BulkTransactionRow[] = [];
+  for (const rule of input.rules) {
+    const dates = getDatesInRangeByWeekdays(input.range, rule.weekdays);
+    const amountAsDecimalString = rule.amount.toFixed(2);
+    for (const date of dates) {
+      rows.push({
+        type: rule.type,
+        accountId: rule.accountId,
+        categoryId: rule.categoryId,
+        amount: amountAsDecimalString,
+        transactionDate: date,
+        note: rule.note,
+      });
+    }
+  }
+
+  if (rows.length === 0) {
+    throw new EmptyBulkResultError(
+      "Không có giao dịch nào khớp lịch đã chọn.",
+    );
+  }
+
+  // Cộng dồn theo "cents" (số nguyên) trước khi quy đổi lại về chuỗi thập
+  // phân, tránh sai số cộng dồn của phép cộng số thực (floating point) khi
+  // gộp balance adjustment của hàng chục/hàng trăm giao dịch cùng account.
+  const adjustmentsByAccount = new Map<
+    string,
+    { accountId: bigint; operation: "increment" | "decrement"; cents: bigint }
+  >();
+  for (const row of rows) {
+    const operation =
+      row.type === transactions_type.expense ? "decrement" : "increment";
+    const key = `${row.accountId}:${operation}`;
+    const cents = BigInt(Math.round(Number(row.amount) * 100));
+    const existing = adjustmentsByAccount.get(key);
+    adjustmentsByAccount.set(key, {
+      accountId: row.accountId,
+      operation,
+      cents: (existing?.cents ?? BigInt(0)) + cents,
+    });
+  }
+  const adjustments: AccountBalanceAdjustment[] = [
+    ...adjustmentsByAccount.values(),
+  ].map((entry) => ({
+    accountId: entry.accountId,
+    operation: entry.operation,
+    amount: (Number(entry.cents) / 100).toFixed(2),
+  }));
+
+  await createManyTransactionsWithBalanceUpdates(userId, rows, adjustments);
+
+  let totalExpense = 0;
+  let totalIncome = 0;
+  for (const row of rows) {
+    if (row.type === transactions_type.expense) {
+      totalExpense += Number(row.amount);
+    } else if (row.type === transactions_type.income) {
+      totalIncome += Number(row.amount);
+    }
+  }
+
+  return { transactionCount: rows.length, totalExpense, totalIncome };
 }
 
 export async function updateTransactionForUser(

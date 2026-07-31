@@ -87,11 +87,11 @@ export function AddTransactionFlow({
   return (
     <>
       <button
-        className="fixed bottom-28 right-[calc((100%-430px)/2+24px)] max-[430px]:right-6 w-16 h-16 bg-[#18448b] text-white shadow-[0_8px_24px_-4px_rgba(24,68,139,0.4)] rounded-[20px] flex items-center justify-center active:scale-90 transition-all z-[60]"
+        className="fixed bottom-16 right-[calc((100%-430px)/2+24px)] max-[430px]:right-6 w-14 h-14 bg-[#18448b] text-white shadow-[0_8px_24px_-4px_rgba(24,68,139,0.4)] rounded-full flex items-center justify-center active:scale-90 transition-all z-[60]"
         onClick={openFlow}
         type="button"
       >
-        <span className="material-symbols-outlined text-[36px]">add</span>
+        <span className="material-symbols-outlined text-[28px]">add</span>
       </button>
 
       {step.name !== "closed" && (

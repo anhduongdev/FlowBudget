@@ -51,14 +51,12 @@ export function LoginForm() {
         {/* Left Side: Branding & Visuals (Desktop Only) */}
         <div className="hidden md:flex flex-col space-y-lg text-left">
           <div className="flex items-center space-x-sm mb-sm">
-            <div className="w-12 h-12 bg-primary rounded-[0.75rem] flex items-center justify-center shadow-lg">
-              <span
-                className="material-symbols-outlined text-white text-[32px]"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                account_balance_wallet
-              </span>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt="FlowBudget"
+              className="w-12 h-12 rounded-[0.75rem] shadow-lg"
+              src="/logo.png"
+            />
             <span className="font-headline-md text-headline-md text-on-surface tracking-tighter">
               FlowBudget
             </span>
@@ -109,14 +107,12 @@ export function LoginForm() {
           >
             {/* Logo & Mobile Branding */}
             <div className="flex md:hidden items-center space-x-sm mb-lg">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md">
-                <span
-                  className="material-symbols-outlined text-white text-[24px]"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  account_balance_wallet
-                </span>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt="FlowBudget"
+                className="w-10 h-10 rounded-lg shadow-md"
+                src="/logo.png"
+              />
               <span className="font-headline-md text-headline-md text-on-surface tracking-tighter">
                 FlowBudget
               </span>

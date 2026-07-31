@@ -205,3 +205,45 @@ export function parseDateRangeParams(
 
   return { start, end };
 }
+
+/**
+ * Strict variant of `parseDateRangeParams`: returns `null` instead of
+ * silently falling back to the current month, so callers that need to
+ * reject invalid input (form validation) can distinguish "invalid" from
+ * "valid but happens to be this month".
+ */
+export function parseInclusiveDateRange(
+  from: string,
+  to: string,
+): DateRange | null {
+  const start = parseIsoDateAsUtcMidnight(from);
+  const toDate = parseIsoDateAsUtcMidnight(to);
+  if (!start || !toDate || start > toDate) {
+    return null;
+  }
+
+  const end = new Date(toDate);
+  end.setUTCDate(end.getUTCDate() + 1);
+
+  return { start, end };
+}
+
+/**
+ * Enumerates every date in `range` (end exclusive) whose Monday-first
+ * weekday index (0=T2 ... 6=CN) is included in `weekdayIndexes`.
+ */
+export function getDatesInRangeByWeekdays(
+  range: DateRange,
+  weekdayIndexes: number[],
+): Date[] {
+  const wanted = new Set(weekdayIndexes);
+  const dates: Date[] = [];
+  const cursor = new Date(range.start);
+  while (cursor < range.end) {
+    if (wanted.has(getMondayFirstWeekdayIndex(cursor))) {
+      dates.push(new Date(cursor));
+    }
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
+}

@@ -46,11 +46,12 @@ export function RegisterForm() {
         <div className="hidden md:flex w-1/2 bg-[linear-gradient(135deg,#3063b5_0%,#18448b_100%)] p-12 flex-col justify-between text-on-primary">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-[0.75rem] flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary font-bold">
-                  account_balance_wallet
-                </span>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt="FlowBudget"
+                className="w-10 h-10 rounded-[0.75rem]"
+                src="/logo.png"
+              />
               <span className="font-headline-md text-headline-md font-bold tracking-tighter">
                 FlowBudget
               </span>
@@ -98,9 +99,12 @@ export function RegisterForm() {
         <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center bg-white">
           <div className="mb-8">
             <div className="md:hidden flex items-center gap-2 mb-6">
-              <span className="material-symbols-outlined text-primary-container text-3xl">
-                account_balance_wallet
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt="FlowBudget"
+                className="w-8 h-8 rounded-lg"
+                src="/logo.png"
+              />
               <span className="font-headline-md text-headline-md font-bold text-on-surface">
                 FlowBudget
               </span>

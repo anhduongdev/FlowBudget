@@ -49,7 +49,7 @@ export async function registerAction(
     throw error;
   }
 
-  redirect("/dashboard");
+  redirect("/preview/transactions");
 }
 
 export async function loginAction(
@@ -74,7 +74,7 @@ export async function loginAction(
     throw error;
   }
 
-  redirect("/dashboard");
+  redirect("/preview/transactions");
 }
 
 export async function logoutAction(): Promise<void> {

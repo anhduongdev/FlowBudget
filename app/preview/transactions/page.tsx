@@ -18,14 +18,6 @@ export const metadata: Metadata = {
   title: "FlowBudget - Giao dịch",
 };
 
-const NAV_ITEMS = [
-  { label: "Tài khoản", icon: "account_balance_wallet", active: false },
-  { label: "Danh mục", icon: "pie_chart", active: false },
-  { label: "Giao dịch", icon: "receipt_long", active: true },
-  { label: "Ngân sách", icon: "speed", active: false },
-  { label: "Tổng quan", icon: "monitoring", active: false },
-] as const;
-
 interface TransactionsPreviewPageProps {
   searchParams: Promise<{ from?: string; to?: string }>;
 }
@@ -71,9 +63,9 @@ export default async function TransactionsPreviewPage({
 
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
-      <div className="w-full max-w-[430px] mx-auto min-h-screen bg-white relative shadow-[0_10px_40px_rgba(0,0,0,0.1)]">
+      <div className="w-full max-w-[430px] mx-auto min-h-screen bg-white relative rounded-3xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.1)]">
         {/* Top AppBar */}
-        <header className="fixed top-0 w-full max-w-[430px] z-50 bg-white/85 backdrop-blur-xl px-6 py-2.5 flex flex-col items-center gap-2 border-b border-[#18448b]/10">
+        <header className="fixed top-0 w-full max-w-[430px] z-50 rounded-t-3xl bg-white/85 backdrop-blur-xl px-6 py-2.5 flex flex-col items-center gap-2 border-b border-[#18448b]/10">
           <div className="flex justify-between items-center w-full">
             <button
               className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-low active:scale-90 transition-transform"
@@ -140,7 +132,7 @@ export default async function TransactionsPreviewPage({
           </div>
         </div>
 
-        <main className="pt-[192px] pb-36 px-6 bg-background min-h-screen">
+        <main className="pt-[192px] pb-24 px-6 bg-background min-h-screen">
           <TransactionList
             accounts={accounts}
             dayGroups={dayGroups}
@@ -157,42 +149,17 @@ export default async function TransactionsPreviewPage({
           incomeCategories={incomeCategories}
         />
 
-        {/* Redesigned Bottom Navigation */}
-        <nav className="fixed bottom-0 w-full max-w-[430px] z-50 flex justify-between items-center px-6 pb-8 pt-4 bg-white/90 backdrop-blur-2xl border-t border-[#18448b]/10 shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.03)]">
-          {NAV_ITEMS.map((item) =>
-            item.active ? (
-              <a
-                className="flex flex-col items-center gap-1 group relative py-1"
-                href="#"
-                key={item.label}
-              >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-10 h-10 bg-[#18448b]/10 rounded-full scale-125"></div>
-                <span
-                  className="material-symbols-outlined text-[#18448b] text-[26px] relative z-10"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  {item.icon}
-                </span>
-                <span className="text-[10px] font-bold text-[#18448b] uppercase tracking-tight relative z-10">
-                  {item.label}
-                </span>
-              </a>
-            ) : (
-              <a
-                className="flex flex-col items-center gap-1 text-on-surface-variant/60 transition-colors"
-                href="#"
-                key={item.label}
-              >
-                <span className="material-symbols-outlined text-[26px]">
-                  {item.icon}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-tight">
-                  {item.label}
-                </span>
-              </a>
-            ),
-          )}
-        </nav>
+        {/* Bottom Brand Bar */}
+        <div className="fixed bottom-0 w-full max-w-[430px] h-12 z-50 bg-white/90 backdrop-blur-2xl border-t border-[#18448b]/10 rounded-3xl shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.03)]">
+          <div className="absolute left-1/2 -translate-x-1/2 -top-6 w-14 h-14 rounded-full bg-white shadow-[0_8px_24px_-4px_rgba(24,68,139,0.4)] ring-4 ring-white flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt="FlowBudget"
+              className="w-full h-full rounded-full object-cover"
+              src="/logo_round.png"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

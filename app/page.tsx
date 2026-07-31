@@ -11,8 +11,16 @@ export default async function Home() {
       {/* Top Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
         <div className="flex justify-between items-center w-full px-margin py-4 max-w-7xl mx-auto">
-          <div className="text-headline-md font-headline-md font-extrabold text-primary tracking-tight">
-            FlowBudget
+          <div className="flex items-center gap-sm">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt="FlowBudget"
+              className="w-9 h-9 rounded-[0.6rem]"
+              src="/logo.png"
+            />
+            <span className="text-headline-md font-headline-md font-extrabold text-primary tracking-tight">
+              FlowBudget
+            </span>
           </div>
           <div className="hidden md:flex items-center space-x-lg">
             <a
@@ -38,7 +46,7 @@ export default async function Home() {
             {user ? (
               <Link
                 className="bg-primary text-white font-label-md px-6 py-2 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all transform active:scale-95 flex items-center gap-2"
-                href="/dashboard"
+                href="/preview/transactions"
               >
                 <span className="material-symbols-outlined text-[20px]">
                   space_dashboard
@@ -86,7 +94,7 @@ export default async function Home() {
               <div className="flex flex-col sm:flex-row gap-md justify-center lg:justify-start">
                 <Link
                   className="primary-gradient text-white px-8 py-4 rounded-xl font-label-md text-center hover:shadow-xl hover:shadow-primary/30 transition-all transform hover:-translate-y-1"
-                  href={user ? "/dashboard" : "/register"}
+                  href={user ? "/preview/transactions" : "/register"}
                 >
                   Bắt đầu ngay
                 </Link>
@@ -477,7 +485,7 @@ export default async function Home() {
               <div className="flex flex-col sm:flex-row gap-md justify-center relative z-10">
                 <Link
                   className="bg-white text-primary px-10 py-4 rounded-xl font-headline-md hover:scale-105 transition-transform"
-                  href={user ? "/dashboard" : "/register"}
+                  href={user ? "/preview/transactions" : "/register"}
                 >
                   {user ? "Vào ứng dụng" : "Đăng ký miễn phí"}
                 </Link>

@@ -1,4 +1,5 @@
 import type { accounts_type } from "@/app/generated/prisma/enums";
+import { accounts_type as AccountType } from "@/app/generated/prisma/enums";
 import { transactions_type } from "@/app/generated/prisma/enums";
 import {
   DEFAULT_ACCOUNT_COLOR,
@@ -30,10 +31,35 @@ export interface AccountOption {
   currentBalance: number;
 }
 
+const DEFAULT_ACCOUNT_NAME = "Tiền mặt";
+const DEFAULT_ACCOUNT_ZERO_BALANCE = "0.00";
+
+// Người dùng mới không có bước tạo tài khoản riêng — tài khoản mặc định
+// được tự tạo ngầm ở lần đầu danh sách account rỗng, để họ vào thẳng
+// form thu nhập/chi tiêu mà không bị chặn lại.
+async function ensureDefaultAccountExists(userId: bigint) {
+  const accounts = await findActiveAccountsByUser(userId);
+  if (accounts.length > 0) {
+    return accounts;
+  }
+
+  await createAccount({
+    userId,
+    name: DEFAULT_ACCOUNT_NAME,
+    type: AccountType.cash,
+    initialBalance: DEFAULT_ACCOUNT_ZERO_BALANCE,
+    currentBalance: DEFAULT_ACCOUNT_ZERO_BALANCE,
+    icon: DEFAULT_ACCOUNT_ICON,
+    color: DEFAULT_ACCOUNT_COLOR,
+  });
+
+  return findActiveAccountsByUser(userId);
+}
+
 export async function listActiveAccountsForUser(
   userId: bigint,
 ): Promise<AccountOption[]> {
-  const accounts = await findActiveAccountsByUser(userId);
+  const accounts = await ensureDefaultAccountExists(userId);
 
   return accounts.map((account) => ({
     id: account.id.toString(),

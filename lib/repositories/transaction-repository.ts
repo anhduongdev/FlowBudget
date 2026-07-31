@@ -216,6 +216,42 @@ export function updateTransactionWithBalanceUpdates(
   });
 }
 
+export interface BulkTransactionRow {
+  type: transactions_type;
+  accountId: bigint;
+  categoryId: bigint | null;
+  amount: string;
+  transactionDate: Date;
+  note: string | null;
+}
+
+export function createManyTransactionsWithBalanceUpdates(
+  userId: bigint,
+  rows: BulkTransactionRow[],
+  adjustments: AccountBalanceAdjustment[],
+) {
+  return prisma.$transaction(
+    async (tx) => {
+      const result = await tx.transactions.createMany({
+        data: rows.map((row) => ({
+          user_id: userId,
+          type: row.type,
+          account_id: row.accountId,
+          category_id: row.categoryId,
+          amount: row.amount,
+          transaction_date: row.transactionDate,
+          note: row.note,
+        })),
+      });
+
+      await applyBalanceAdjustments(tx, userId, adjustments);
+
+      return result;
+    },
+    { timeout: 15_000 },
+  );
+}
+
 export function deleteTransactionWithBalanceUpdates(
   id: bigint,
   userId: bigint,
